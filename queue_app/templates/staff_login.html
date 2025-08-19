@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Staff Login</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 400px; margin: 0 auto; padding: 20px; }
+        input { width: 100%; padding: 8px; margin: 8px 0; box-sizing: border-box; }
+        button { background: #4CAF50; color: white; padding: 10px 15px; border: none; width: 100%; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <h1>Staff Login</h1>
+    <form method="post">
+        {% csrf_token %}
+        <input type="text" name="username" placeholder="Username" required>
+        <input type="password" name="password" placeholder="Password" required>
+        <button type="submit">Login</button>
+        {% if error %}<p class="error">{{ error }}</p>{% endif %}
+    </form>
+</body>
+</html>

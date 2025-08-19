@@ -1,0 +1,167 @@
+<!-- patient_login.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Patient Login</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; }
+        input { width: 100%; padding: 8px; box-sizing: border-box; }
+        button { background: #4CAF50; color: white; border: none; padding: 10px 15px; cursor: pointer; }
+        .error { color: red; }
+        #otp-section { display: none; }
+    </style>
+</head>
+<body>
+    <h1>Patient Login</h1>
+    
+    <div id="phone-section">
+        <div class="form-group">
+            <label for="phone">Phone Number</label>
+            <input type="tel" id="phone" placeholder="Enter your phone number">
+        </div>
+        <div class="form-group" id="name-group" style="display: none;">
+            <label for="name">Full Name</label>
+            <input type="text" id="name" placeholder="Enter your full name">
+        </div>
+        <button onclick="sendOTP()">Send OTP</button>
+        <p class="error" id="phone-error"></p>
+    </div>
+    
+    <div id="otp-section">
+        <div class="form-group">
+            <label for="otp">Enter OTP</label>
+            <input type="text" id="otp" placeholder="Enter 6-digit OTP">
+        </div>
+        <button onclick="verifyOTP()">Verify OTP</button>
+        <p class="error" id="otp-error"></p>
+    </div>
+
+    <script>
+        // In patient_login.html
+function sendOTP() {
+    const phone = document.getElementById('phone').value;
+    const name = document.getElementById('name').value;
+    
+    // Clear previous errors
+    document.getElementById('phone-error').textContent = '';
+    
+    // Basic validation
+    if (!phone || phone.length !== 10 || !/^\d+$/.test(phone)) {
+        document.getElementById('phone-error').textContent = 'Please enter a valid 10-digit number';
+        return;
+    }
+
+    fetch('/api/send-otp/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: `phone_number=${phone}&name=${encodeURIComponent(name)}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'error' && data.new_patient) {
+            // Show name field for new patients
+            document.getElementById('name-group').style.display = 'block';
+            document.getElementById('name').focus();
+            document.getElementById('phone-error').textContent = data.message;
+        } 
+        else if (data.status === 'success') {
+            document.getElementById('phone-section').style.display = 'none';
+            document.getElementById('otp-section').style.display = 'block';
+        }
+        else {
+            document.getElementById('phone-error').textContent = data.message || 'Failed to send OTP';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('phone-error').textContent = 'Network error. Please try again.';
+    });
+}
+
+// Check if patient exists when phone number is entered
+document.getElementById('phone').addEventListener('blur', function() {
+    const phone = this.value;
+    if (phone.length === 10 && /^\d+$/.test(phone)) {
+        fetch(`/api/check-patient/?phone=${phone}`)
+        .then(response => {
+            if (!response.ok) throw new Error('Network error');
+            return response.json();
+        })
+        .then(data => {
+            document.getElementById('name-group').style.display = 
+                data.exists ? 'none' : 'block';
+        })
+        .catch(error => {
+            console.error('Check patient error:', error);
+        });
+    }
+});
+        
+        function verifyOTP() {
+            const phone = document.getElementById('phone').value;
+            const otp = document.getElementById('otp').value;
+            
+            if (!otp || otp.length !== 6) {
+                document.getElementById('otp-error').textContent = 'Please enter a valid 6-digit OTP';
+                return;
+            }
+            
+            fetch('/api/verify-otp/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: `phone_number=${phone}&otp=${otp}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    window.location.href = '/service_selection/';
+                } else {
+                    document.getElementById('otp-error').textContent = data.message;
+                }
+            });
+        }
+        
+        // Check if phone exists to show/hide name field
+        document.getElementById('phone').addEventListener('blur', function() {
+    const phone = this.value;
+    if (phone.length === 10) {
+        fetch(`/api/check-patient/?phone=${phone}`)  // Note: Changed endpoint
+        .then(response => {
+            if (!response.ok) throw new Error('Network error');
+            return response.json();
+        })
+        .then(data => {
+            document.getElementById('name-group').style.display = 
+                data.exists ? 'none' : 'block';
+        })
+        .catch(error => {
+            console.error('Check patient error:', error);
+        });
+    }
+});
+        
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+</body>
+</html>

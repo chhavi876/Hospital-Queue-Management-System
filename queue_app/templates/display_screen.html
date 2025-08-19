@@ -1,0 +1,78 @@
+<!-- templates/queue_app/display_screen.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Display Screen</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #222;
+            color: white;
+        }
+        .counter-display {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .counter {
+            background-color: #333;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 10px;
+            width: 300px;
+            text-align: center;
+        }
+        .counter-name {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .current-patient {
+            font-size: 20px;
+            margin: 10px 0;
+        }
+        .queue-id {
+            font-size: 32px;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center;">Queue Management System</h1>
+    
+    <div class="counter-display">
+        {% for counter in counters %}
+        <div class="counter">
+            <div class="counter-name">Counter {{ counter.counter_id }}</div>
+            <div class="counter-status">{{ counter.get_current_status_display }}</div>
+            
+            {% if serving_patients.counter.counter_id %}
+            <div class="current-patient">
+                Now Serving:
+                <div class="queue-id">{{ serving_patients.counter.counter_id.queue_id }}</div>
+                {{ serving_patients.counter.counter_id.patient_name }}
+            </div>
+            {% else %}
+            <div class="current-patient">Not currently serving</div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+
+    <script>
+        // WebSocket connection for real-time updates
+        const socket = new WebSocket(
+            'ws://' + window.location.host + '/ws/queue/updates/'
+        );
+        
+        socket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            // Update the display with new information
+            console.log('Update received:', data);
+            // Implement your display update logic here
+            window.location.reload(); // Simple refresh for now
+        };
+    </script>
+</body>
+</html>

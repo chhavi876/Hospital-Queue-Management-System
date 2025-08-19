@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Select Service</title>
+    <style>
+        .service-card {
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .service-card:hover {
+            background-color: #f5f5f5;
+        }
+        #debug-console {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <h1>Select a Service</h1>
+    <div id="services-container">
+    {% if services %}
+        <div class="service-options">
+            {% for service in services %}
+            <div class="service-card">
+                <h3>{{ service.service_name }}</h3>
+                <p>{{ service.description }}</p>
+                <button 
+                    data-service="{{ service.service_id }}" 
+                    onclick="selectService({{ service.service_id }})"
+                >
+                    Select
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="alert">
+            <p>No services currently available. Please try again later.</p>
+            <button onclick="window.location.reload()">Refresh</button>
+        </div>
+    {% endif %}
+</div>
+
+    <div id="debug-console"></div>
+
+    <script>
+        function logDebug(message) {
+            const consoleDiv = document.getElementById('debug-console');
+            consoleDiv.innerHTML += `<p>${new Date().toLocaleTimeString()}: ${message}</p>`;
+            console.log(message);
+        }
+
+        function selectService(serviceId) {
+    // Show loading state
+    const button = document.querySelector(`button[data-service="${serviceId}"]`);
+    button.disabled = true;
+    button.innerHTML = 'Processing...';
+    
+    logDebug(`Attempting to select service ID: ${serviceId}`);
+    
+    const csrfToken = getCookie('csrftoken');
+    if (!csrfToken) {
+        logDebug('Error: CSRF token not found');
+        alert('Session error. Please refresh the page.');
+        button.disabled = false;
+        button.innerHTML = 'Select';
+        return;
+    }
+
+    logDebug(`CSRF token found: ${csrfToken}`);
+    
+    fetch('/queue/join/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': csrfToken
+        },
+        body: `service_id=${serviceId}`
+    })
+    .then(response => {
+        logDebug(`Received response with status: ${response.status}`);
+        if (!response.ok) {
+            return response.json().then(err => { throw err; });
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.status === 'success') {
+            if (data.show_reminder) {
+                alert("Please consult with doctor first");
+            }
+            window.location.href = '/dashboard/';
+        } else {
+            throw new Error(data.message || 'Unknown error');
+        }
+    })
+    .catch(error => {
+        logDebug(`Error: ${error.message}`);
+        alert(error.message || 'Failed to join queue. Please try again.');
+        button.disabled = false;
+        button.innerHTML = 'Select';
+    });
+}
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        logDebug('Page loaded successfully');
+    </script>
+</body>
+</html>

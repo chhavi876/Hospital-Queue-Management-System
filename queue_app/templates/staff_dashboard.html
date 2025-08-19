@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Staff Dashboard</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .counter-status {
+            padding: 10px;
+            margin: 10px 0;
+            font-weight: bold;
+            border-radius: 5px;
+        }
+        .available { background: #d4edda; color: #155724; }
+        .busy { background: #f8d7da; color: #721c24; }
+        .break { background: #fff3cd; color: #856404; }
+        .patient-list { 
+            margin: 20px 0;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .patient-card {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+        .patient-card:hover {
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .serving { 
+            background: #cce5ff;
+            border-left: 4px solid #0066cc;
+        }
+        .controls {
+            margin: 20px 0;
+            display: flex;
+            gap: 10px;
+        }
+        button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        button:hover:not(:disabled) {
+            transform: translateY(-1px);
+        }
+        #mark-available {
+            background: #28a745;
+            color: white;
+        }
+        #mark-busy {
+            background: #dc3545;
+            color: white;
+        }
+        #mark-break {
+            background: #ffc107;
+            color: #212529;
+        }
+        .break-notice {
+            background-color: #fff3cd;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-left: 5px solid #ffc107;
+            border-radius: 4px;
+        }
+        .refresh-indicator {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background: #f0f0f0;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .patient-actions {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+        }
+        .patient-actions button {
+            padding: 6px 12px;
+            font-size: 14px;
+        }
+        #complete-btn {
+            background: #28a745;
+            color: white;
+        }
+        #skip-btn {
+            background: #6c757d;
+            color: white;
+        }
+        #announce-btn {
+            background: #17a2b8;
+            color: white;
+        }
+        .waiting-time {
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <h1>Staff Dashboard - {{ counter.counter_name }}</h1>
+    
+    <div class="counter-status {{ counter.current_status }}">
+        Current Status: {{ counter.get_current_status_display }}
+    </div>
+    
+    <div class="controls">
+        <button id="mark-available" onclick="updateCounterStatus('available')">Mark Available</button>
+        <button id="mark-busy" onclick="updateCounterStatus('busy')">Mark Busy</button>
+        <button id="mark-break" onclick="updateCounterStatus('break')">Go on Break</button>
+    </div>
+    
+    {% if handling_break_counter %}
+    <div class="break-notice">
+        <h3>⚠️ Handling Patients for Counter {{ handling_break_counter }}</h3>
+        <p>You are currently handling patients from {{ handling_break_counter }} while their staff is on break.</p>
+    </div>
+    {% endif %}
+
+    {% if serving_patient %}
+    <div class="patient-card serving" id="serving-patient">
+        <h3>Currently Serving</h3>
+        <p><strong>Name:</strong> {{ serving_patient.patient.name }}</p>
+        <p><strong>Phone:</strong> {{ serving_patient.patient.phone_number }}</p>
+        <p><strong>Queue ID:</strong> {{ serving_patient.queue_id }}</p>
+        <div class="patient-actions">
+            <button id="announce-btn" onclick="announcePatient('{{ serving_patient.queue_id }}')">
+                Announce ({{ serving_patient.announcement_count }}/3)
+            </button>
+            <button id="complete-btn" onclick="serveNext()">Complete</button>
+            <button id="skip-btn" onclick="skipPatient('{{ serving_patient.queue_id }}')">Skip</button>
+        </div>
+    </div>
+    {% endif %}
+    
+    <div class="patient-list">
+        <h2>Waiting Queue ({{ queue_entries.count }})</h2>
+        <div id="waiting-queue">
+            {% for patient in queue_entries %}
+            <div class="patient-card">
+                <p><strong>Name:</strong> {{ patient.patient.name }}</p>
+                <p><strong>Queue ID:</strong> {{ patient.queue_id }}</p>
+                <p class="waiting-time">Waiting: {{ patient.created_at|timesince }}</p>
+            </div>
+            {% empty %}
+            <div class="patient-card">
+                <p>No patients in queue</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="refresh-indicator" id="refresh-indicator">
+        Last updated: <span id="last-updated">Just now</span>
+    </div>
+
+    <script>
+        // Auto-refresh every 5 seconds
+        let refreshInterval = setInterval(fetchQueueData, 5000);
+        
+        // Enhanced queue data fetching
+        function fetchQueueData() {
+            fetch('/staff/get_queue_data/')
+                .then(response => {
+                    if (!response.ok) throw new Error('Network error');
+                    return response.json();
+                })
+                .then(data => {
+                    updateQueueDisplay(data);
+                    document.getElementById('last-updated').textContent = new Date().toLocaleTimeString();
+                })
+                .catch(error => {
+                    console.error('Error fetching queue:', error);
+                    document.getElementById('last-updated').textContent = 'Update failed - ' + new Date().toLocaleTimeString();
+                });
+        }
+
+        function updateQueueDisplay(data) {
+            // Update counter status display
+            const statusDiv = document.querySelector('.counter-status');
+            statusDiv.className = `counter-status ${data.counter_status}`;
+            statusDiv.textContent = `Current Status: ${data.counter_status.charAt(0).toUpperCase() + data.counter_status.slice(1)}`;
+            
+            // Update serving patient
+            const servingContainer = document.getElementById('serving-patient');
+            if (data.serving_patient) {
+                if (!servingContainer) {
+                    // Create serving patient section if it doesn't exist
+                    const newServingDiv = document.createElement('div');
+                    newServingDiv.className = 'patient-card serving';
+                    newServingDiv.id = 'serving-patient';
+                    newServingDiv.innerHTML = `
+                        <h3>Currently Serving</h3>
+                        <p><strong>Name:</strong> ${data.serving_patient.name}</p>
+                        <p><strong>Phone:</strong> ${data.serving_patient.phone || 'N/A'}</p>
+                        <p><strong>Queue ID:</strong> ${data.serving_patient.queue_id}</p>
+                        <div class="patient-actions">
+                            <button id="announce-btn" onclick="announcePatient('${data.serving_patient.queue_id}')">
+                                Announce (${data.serving_patient.announcement_count}/3)
+                            </button>
+                            <button id="complete-btn" onclick="serveNext()">Complete</button>
+                            <button id="skip-btn" onclick="skipPatient('${data.serving_patient.queue_id}')">Skip</button>
+                        </div>
+                    `;
+                    document.querySelector('.patient-list').before(newServingDiv);
+                } else {
+                    // Update existing serving patient
+                    const announceBtn = servingContainer.querySelector('#announce-btn');
+                    announceBtn.textContent = `Announce (${data.serving_patient.announcement_count}/3)`;
+                }
+            } else if (servingContainer) {
+                // Remove serving patient section if no one is being served
+                servingContainer.remove();
+            }
+            
+            // Update waiting queue
+            const queueContainer = document.getElementById('waiting-queue');
+            let html = '';
+            
+            if (data.waiting_patients.length > 0) {
+                data.waiting_patients.forEach(patient => {
+                    html += `
+                    <div class="patient-card">
+                        <p><strong>Name:</strong> ${patient.name}</p>
+                        <p><strong>Queue ID:</strong> ${patient.queue_id}</p>
+                        <p class="waiting-time">Waiting: ${patient.waiting_time}</p>
+                    </div>`;
+                });
+            } else {
+                html = '<div class="patient-card"><p>No patients in queue</p></div>';
+            }
+            queueContainer.innerHTML = html;
+            
+            // Update break notice if needed
+            const breakNotice = document.querySelector('.break-notice');
+            if (data.handling_break_counter) {
+                if (!breakNotice) {
+                    const newBreakNotice = document.createElement('div');
+                    newBreakNotice.className = 'break-notice';
+                    newBreakNotice.innerHTML = `
+                        <h3>⚠️ Handling Patients for Counter ${data.handling_break_counter}</h3>
+                        <p>You are currently handling patients from ${data.handling_break_counter} while their staff is on break.</p>
+                    `;
+                    document.querySelector('.controls').after(newBreakNotice);
+                }
+            } else if (breakNotice) {
+                breakNotice.remove();
+            }
+        }
+
+        function updateCounterStatus(status) {
+            const buttons = document.querySelectorAll('.controls button');
+            buttons.forEach(btn => btn.disabled = true);
+            
+            fetch('/staff/update_status/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ status: status })
+            })
+            .then(response => {
+                buttons.forEach(btn => btn.disabled = false);
+                if (!response.ok) throw new Error('Status update failed');
+                return response.json();
+            })
+            .then(data => {
+                if (data.status === 'success') {
+                    fetchQueueData();
+                }
+            })
+            .catch(error => {
+                buttons.forEach(btn => btn.disabled = false);
+                alert('Error: ' + error.message);
+            });
+        }
+
+        function serveNext() {
+            const btn = document.querySelector('#complete-btn');
+            btn.disabled = true;
+            btn.textContent = 'Processing...';
+            
+            fetch('/staff/serve_next/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            })
+            .then(response => {
+                btn.disabled = false;
+                btn.textContent = 'Complete';
+                if (!response.ok) throw new Error('Failed to complete');
+                return response.json();
+            })
+            .then(data => {
+                if (data.status === 'success') {
+                    fetchQueueData();
+                }
+            })
+            .catch(error => {
+                alert('Error: ' + error.message);
+            });
+        }
+
+        function skipPatient(queueId) {
+            if (!confirm('Are you sure you want to skip this patient?')) return;
+            
+            const btn = document.querySelector('#skip-btn');
+            btn.disabled = true;
+            btn.textContent = 'Processing...';
+            
+            fetch('/staff/skip_patient/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ queue_id: queueId })
+            })
+            .then(response => {
+                btn.disabled = false;
+                btn.textContent = 'Skip';
+                if (!response.ok) throw new Error('Failed to skip');
+                return response.json();
+            })
+            .then(data => {
+                if (data.status === 'success') {
+                    fetchQueueData();
+                }
+            })
+            .catch(error => {
+                alert('Error: ' + error.message);
+            });
+        }
+
+        function announcePatient(queueId) {
+            const btn = document.querySelector('#announce-btn');
+            btn.disabled = true;
+            
+            fetch('/staff/announce_patient/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ queue_id: queueId })
+            })
+            .then(response => {
+                btn.disabled = false;
+                if (!response.ok) throw new Error('Failed to announce');
+                return response.json();
+            })
+            .then(data => {
+                if (data.status === 'announced') {
+                    btn.textContent = `Announce (${data.count}/3)`;
+                    alert(`Patient announced (${data.count}/3)`);
+                    fetchQueueData();
+                } else if (data.status === 'skipped') {
+                    if (data.next_patient) {
+                        alert(`Patient skipped after 3 announcements. Now serving: ${data.next_patient.name}`);
+                    } else {
+                        alert('Patient skipped after 3 announcements. No more patients in queue.');
+                    }
+                    fetchQueueData();
+                }
+            })
+            .catch(error => {
+                alert('Error: ' + error.message);
+            });
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // WebSocket connection for real-time updates
+        const socketProtocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+        const socket = new WebSocket(
+            socketProtocol + window.location.host + '/ws/queue/updates/'
+        );
+        
+        socket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            if (data.counter_id === {{ counter.counter_id }}) {
+                fetchQueueData();
+            }
+        };
+
+        socket.onclose = function() {
+            console.log('WebSocket disconnected, falling back to polling');
+            clearInterval(refreshInterval);
+            refreshInterval = setInterval(fetchQueueData, 5000);
+        };
+
+        // Initial load
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchQueueData();
+        });
+    </script>
+</body>
+</html>
