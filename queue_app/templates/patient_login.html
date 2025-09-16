@@ -1,107 +1,258 @@
-<!-- patient_login.html -->
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Patient Login</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Login - Queue System</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; }
-        input { width: 100%; padding: 8px; box-sizing: border-box; }
-        button { background: #4CAF50; color: white; border: none; padding: 10px 15px; cursor: pointer; }
-        .error { color: red; }
-        #otp-section { display: none; }
+        :root {
+            --primary: #3498db;
+            --secondary: #2c3e50;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .login-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 450px;
+            overflow: hidden;
+        }
+        
+        .login-header {
+            background: var(--secondary);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .login-header h1 {
+            font-size: 2.2em;
+            font-weight: 300;
+            margin-bottom: 10px;
+        }
+        
+        .login-header p {
+            opacity: 0.9;
+        }
+        
+        .login-form {
+            padding: 40px;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e8ed;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+        
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+        
+        .error-message {
+            background: #fee;
+            color: var(--danger);
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+            border-left: 4px solid var(--danger);
+            font-weight: 500;
+        }
+        
+        .section {
+            display: block;
+            transition: all 0.3s ease;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .otp-timer {
+            text-align: center;
+            margin-top: 15px;
+            color: var(--dark);
+            font-size: 14px;
+        }
+        
+        @media (max-width: 480px) {
+            .login-form {
+                padding: 30px 20px;
+            }
+            
+            .login-header {
+                padding: 20px;
+            }
+            
+            .login-header h1 {
+                font-size: 1.8em;
+            }
+        }
     </style>
 </head>
 <body>
-    <h1>Patient Login</h1>
-    
-    <div id="phone-section">
-        <div class="form-group">
-            <label for="phone">Phone Number</label>
-            <input type="tel" id="phone" placeholder="Enter your phone number">
+    <div class="login-container">
+        <div class="login-header">
+            <h1>Patient Login</h1>
+            <p>Enter your details to continue</p>
         </div>
-        <div class="form-group" id="name-group" style="display: none;">
-            <label for="name">Full Name</label>
-            <input type="text" id="name" placeholder="Enter your full name">
+        
+        <div class="login-form">
+            <div id="phone-section" class="section">
+                <div class="form-group">
+                    <label for="phone">Phone Number</label>
+                    <input type="tel" id="phone" placeholder="Enter your 10-digit phone number" maxlength="10">
+                </div>
+                
+                <div class="form-group" id="name-group" style="display: none;">
+                    <label for="name">Full Name</label>
+                    <input type="text" id="name" placeholder="Enter your full name">
+                </div>
+                
+                <button class="btn btn-primary" onclick="sendOTP()">Send OTP</button>
+                <div class="error-message" id="phone-error"></div>
+            </div>
+            
+            <div id="otp-section" class="section hidden">
+                <div class="form-group">
+                    <label for="otp">Enter OTP</label>
+                    <input type="text" id="otp" placeholder="Enter 6-digit OTP" maxlength="6">
+                </div>
+                
+                <button class="btn btn-primary" onclick="verifyOTP()">Verify OTP</button>
+                <div class="error-message" id="otp-error"></div>
+                <div class="otp-timer" id="otp-timer">OTP valid for: 5:00</div>
+            </div>
         </div>
-        <button onclick="sendOTP()">Send OTP</button>
-        <p class="error" id="phone-error"></p>
-    </div>
-    
-    <div id="otp-section">
-        <div class="form-group">
-            <label for="otp">Enter OTP</label>
-            <input type="text" id="otp" placeholder="Enter 6-digit OTP">
-        </div>
-        <button onclick="verifyOTP()">Verify OTP</button>
-        <p class="error" id="otp-error"></p>
     </div>
 
     <script>
         // In patient_login.html
-function sendOTP() {
-    const phone = document.getElementById('phone').value;
-    const name = document.getElementById('name').value;
-    
-    // Clear previous errors
-    document.getElementById('phone-error').textContent = '';
-    
-    // Basic validation
-    if (!phone || phone.length !== 10 || !/^\d+$/.test(phone)) {
-        document.getElementById('phone-error').textContent = 'Please enter a valid 10-digit number';
-        return;
-    }
+        function sendOTP() {
+            const phone = document.getElementById('phone').value;
+            const name = document.getElementById('name').value;
+            
+            // Clear previous errors
+            document.getElementById('phone-error').textContent = '';
+            
+            // Basic validation
+            if (!phone || phone.length !== 10 || !/^\d+$/.test(phone)) {
+                document.getElementById('phone-error').textContent = 'Please enter a valid 10-digit number';
+                return;
+            }
 
-    fetch('/api/send-otp/', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'X-CSRFToken': getCookie('csrftoken')
-        },
-        body: `phone_number=${phone}&name=${encodeURIComponent(name)}`
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.status === 'error' && data.new_patient) {
-            // Show name field for new patients
-            document.getElementById('name-group').style.display = 'block';
-            document.getElementById('name').focus();
-            document.getElementById('phone-error').textContent = data.message;
-        } 
-        else if (data.status === 'success') {
-            document.getElementById('phone-section').style.display = 'none';
-            document.getElementById('otp-section').style.display = 'block';
+            fetch('/api/send-otp/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: `phone_number=${phone}&name=${encodeURIComponent(name)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'error' && data.new_patient) {
+                    // Show name field for new patients
+                    document.getElementById('name-group').style.display = 'block';
+                    document.getElementById('name').focus();
+                    document.getElementById('phone-error').textContent = data.message;
+                } 
+                else if (data.status === 'success') {
+                    document.getElementById('phone-section').classList.add('hidden');
+                    document.getElementById('otp-section').classList.remove('hidden');
+                    startOTPTimer();
+                }
+                else {
+                    document.getElementById('phone-error').textContent = data.message || 'Failed to send OTP';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('phone-error').textContent = 'Network error. Please try again.';
+            });
         }
-        else {
-            document.getElementById('phone-error').textContent = data.message || 'Failed to send OTP';
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        document.getElementById('phone-error').textContent = 'Network error. Please try again.';
-    });
-}
 
-// Check if patient exists when phone number is entered
-document.getElementById('phone').addEventListener('blur', function() {
-    const phone = this.value;
-    if (phone.length === 10 && /^\d+$/.test(phone)) {
-        fetch(`/api/check-patient/?phone=${phone}`)
-        .then(response => {
-            if (!response.ok) throw new Error('Network error');
-            return response.json();
-        })
-        .then(data => {
-            document.getElementById('name-group').style.display = 
-                data.exists ? 'none' : 'block';
-        })
-        .catch(error => {
-            console.error('Check patient error:', error);
-        });
-    }
-});
-        
+        function startOTPTimer() {
+            let timeLeft = 300; // 5 minutes in seconds
+            const timerElement = document.getElementById('otp-timer');
+            
+            const timer = setInterval(() => {
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    timerElement.innerHTML = 'OTP expired. <a href="javascript:location.reload()">Request new OTP</a>';
+                    return;
+                }
+                
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                timerElement.textContent = `OTP valid for: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+                timeLeft--;
+            }, 1000);
+        }
+
         function verifyOTP() {
             const phone = document.getElementById('phone').value;
             const otp = document.getElementById('otp').value;
@@ -131,22 +282,22 @@ document.getElementById('phone').addEventListener('blur', function() {
         
         // Check if phone exists to show/hide name field
         document.getElementById('phone').addEventListener('blur', function() {
-    const phone = this.value;
-    if (phone.length === 10) {
-        fetch(`/api/check-patient/?phone=${phone}`)  // Note: Changed endpoint
-        .then(response => {
-            if (!response.ok) throw new Error('Network error');
-            return response.json();
-        })
-        .then(data => {
-            document.getElementById('name-group').style.display = 
-                data.exists ? 'none' : 'block';
-        })
-        .catch(error => {
-            console.error('Check patient error:', error);
+            const phone = this.value;
+            if (phone.length === 10) {
+                fetch(`/api/check-patient/?phone=${phone}`)
+                .then(response => {
+                    if (!response.ok) throw new Error('Network error');
+                    return response.json();
+                })
+                .then(data => {
+                    document.getElementById('name-group').style.display = 
+                        data.exists ? 'none' : 'block';
+                })
+                .catch(error => {
+                    console.error('Check patient error:', error);
+                });
+            }
         });
-    }
-});
         
         function getCookie(name) {
             let cookieValue = null;
