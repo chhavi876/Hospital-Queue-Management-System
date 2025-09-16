@@ -44,6 +44,7 @@ class Counter(models.Model):
     status_updated_at = models.DateTimeField(auto_now=True)
     start_time = models.TimeField()
     end_time = models.TimeField()
+    is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -89,7 +90,17 @@ class Staff(models.Model):
         if not self.password.startswith('pbkdf2_sha256$'):  # Check if already hashed
             self.password = make_password(self.password)
         super().save(*args, **kwargs)
-        
+    
+    def set_password(self, raw_password):
+        from django.contrib.auth.hashers import make_password
+        self.password = make_password(raw_password)
+        self.save()
+    
+    
+    def check_password(self, raw_password):
+        from django.contrib.auth.hashers import check_password
+        return check_password(raw_password, self.password)
+
     def __str__(self):
         return f"{self.username} ({self.role})"
 
@@ -127,10 +138,11 @@ class QueueEntry(models.Model):
 class QueueHistory(models.Model):
     STATUS_CHOICES = [
         ('served', 'Served'),
+        ('completed', 'Completed'),
         ('skipped', 'Skipped'),
     ]
     
-    queue_id = models.CharField(max_length=10)
+    queue_id = models.CharField(max_length=50)
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
     service = models.ForeignKey(Service, on_delete=models.CASCADE)
     counter = models.ForeignKey(Counter, on_delete=models.CASCADE)
