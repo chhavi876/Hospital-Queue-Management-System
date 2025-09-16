@@ -16,8 +16,11 @@ class StaffAdmin(admin.ModelAdmin):
     
     def save_model(self, request, obj, form, change):
         if 'password' in form.changed_data:
+            # Use the set_password method we just added
             obj.set_password(form.cleaned_data['password'])
-        super().save_model(request, obj, form, change)
+        else:
+            # Save normally if password wasn't changed
+            super().save_model(request, obj, form, change)
 
 admin.site.register(Service)
 admin.site.register(Counter)
