@@ -25,22 +25,32 @@ SECRET_KEY = 'django-insecure-8f$bnis#4n8bn6%j(xln6)f_1^1(ruz64k1wa6v0ia$otsvvox
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '192.168.1.45', '192.168.4.93']
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'queue_app',
     'channels',
-    
+    'queue_app',
 ]
+
+# Enhanced session settings
+SESSION_COOKIE_NAME = 'queuesystem_staff_session'
+SESSION_COOKIE_AGE = 3600  # 1 hour
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_SAVE_EVERY_REQUEST = True
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
+SESSION_COOKIE_SAMESITE = 'Lax'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -50,6 +60,10 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
+    'queue_app.middleware.SessionTabIsolationMiddleware',
+    'queue_app.middleware.StaffSessionMiddleware',
+    
 ]
 
 ROOT_URLCONF = 'queue_system.urls'
@@ -72,6 +86,9 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'queue_system.wsgi.application'
 
+TWILIO_ACCOUNT_SID = ''  
+TWILIO_AUTH_TOKEN = ''    
+TWILIO_PHONE_NUMBER = ''  
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
@@ -92,13 +109,16 @@ ASGI_APPLICATION = 'queue_system.asgi.application'
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels.layers.InMemoryChannelLayer',
-        # For production, use Redis:
-        # 'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        # 'CONFIG': {
-        #     "hosts": [('127.0.0.1', 6379)],
-        # },
+        'CONFIG': {
+            'groups': {
+                'staff_updates': {},
+                'display_updates': {},
+            }
+        }    
     },
 }
+
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
