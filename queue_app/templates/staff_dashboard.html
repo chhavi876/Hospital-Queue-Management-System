@@ -1,176 +1,605 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Staff Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Staff Dashboard - Queue System</title>
     <style>
-        body { 
-            font-family: Arial, sans-serif;
-            margin: 20px;
+        :root {
+            --primary: #3498db;
+            --primary-dark: #2980b9;
+            --secondary: #2c3e50;
+            --success: #27ae60;
+            --success-dark: #219653;
+            --warning: #f39c12;
+            --warning-dark: #e67e22;
+            --danger: #e74c3c;
+            --danger-dark: #c0392b;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --gray: #95a5a6;
+            --border-radius: 12px;
+            --shadow: 0 8px 25px rgba(0,0,0,0.1);
+            --transition: all 0.3s ease;
         }
-        .counter-status {
-            padding: 10px;
-            margin: 10px 0;
-            font-weight: bold;
-            border-radius: 5px;
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        .available { background: #d4edda; color: #155724; }
-        .busy { background: #f8d7da; color: #721c24; }
-        .break { background: #fff3cd; color: #856404; }
-        .patient-list { 
-            margin: 20px 0;
-            max-height: 400px;
-            overflow-y: auto;
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--dark);
         }
-        .patient-card {
-            border: 1px solid #ddd;
+
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            overflow: hidden;
+        }
+
+        .header {
+            background: var(--secondary);
+            color: white;
+            padding: 25px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header h1 {
+            font-size: 2.2em;
+            font-weight: 300;
+            margin: 0;
+        }
+
+        .session-info {
+            background: rgba(255,255,255,0.1);
             padding: 15px;
-            margin: 10px 0;
-            border-radius: 5px;
-            transition: all 0.3s ease;
+            border-radius: var(--border-radius);
+            margin: 15px 0;
         }
-        .patient-card:hover {
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+
+        .session-info strong {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+            opacity: 0.9;
         }
-        .serving { 
-            background: #cce5ff;
-            border-left: 4px solid #0066cc;
+
+        .session-info div {
+            margin: 5px 0;
+            font-size: 0.9em;
         }
-        .controls {
-            margin: 20px 0;
+
+        .debug-buttons {
             display: flex;
             gap: 10px;
+            margin-top: 10px;
         }
-        button {
-            padding: 8px 15px;
+
+        .btn {
+            padding: 8px 16px;
             border: none;
-            border-radius: 4px;
+            border-radius: 6px;
+            font-weight: 600;
             cursor: pointer;
-            font-weight: bold;
-            transition: all 0.2s;
+            transition: var(--transition);
+            font-size: 0.9em;
         }
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 0.8em;
         }
-        button:hover:not(:disabled) {
-            transform: translateY(-1px);
-        }
-        #mark-available {
-            background: #28a745;
+
+        .btn-primary {
+            background: var(--primary);
             color: white;
         }
-        #mark-busy {
-            background: #dc3545;
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .main-content {
+            padding: 30px;
+        }
+
+        .counter-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .counter-card {
+            background: var(--light);
+            padding: 25px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+
+        .counter-card h2 {
+            color: var(--secondary);
+            margin-bottom: 15px;
+            font-size: 1.5em;
+            font-weight: 600;
+        }
+
+        .counter-info {
+            display: grid;
+            gap: 12px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .info-value {
+            color: var(--secondary);
+            font-weight: 500;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+
+        .status-available { background: #d4edda; color: #155724; }
+        .status-busy { background: #f8d7da; color: #721c24; }
+        .status-break { background: #fff3cd; color: #856404; }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .control-btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            min-width: 140px;
+        }
+
+        .btn-success {
+            background: var(--success);
             color: white;
         }
-        #mark-break {
-            background: #ffc107;
-            color: #212529;
+
+        .btn-success:hover {
+            background: var(--success-dark);
+            transform: translateY(-2px);
         }
-        .break-notice {
-            background-color: #fff3cd;
-            padding: 15px;
+
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: var(--warning-dark);
+            transform: translateY(-2px);
+        }
+
+        .start-serving-section {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+            padding: 25px;
+            border-radius: var(--border-radius);
+            border: 2px solid var(--primary);
+            margin: 25px 0;
+            text-align: center;
+        }
+
+        .start-serving-section h3 {
+            color: var(--primary-dark);
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .start-serving-btn {
+            background: var(--success);
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .start-serving-btn:hover {
+            background: var(--success-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3);
+        }
+
+        .patient-section {
+            margin-top: 30px;
+        }
+
+        .section-title {
+            font-size: 1.5em;
+            color: var(--secondary);
             margin-bottom: 20px;
-            border-left: 5px solid #ffc107;
-            border-radius: 4px;
+            font-weight: 600;
         }
+
+        .serving-container {
+            background: linear-gradient(135deg, #cce5ff 0%, #99caff 100%);
+            padding: 25px;
+            border-radius: var(--border-radius);
+            margin-bottom: 25px;
+            border-left: 5px solid var(--primary);
+        }
+
+        .serving-container h3 {
+            color: var(--primary-dark);
+            margin-bottom: 20px;
+            font-size: 1.3em;
+        }
+
+        .patient-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .detail-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        }
+
+        .detail-label {
+            font-size: 0.9em;
+            color: var(--gray);
+            margin-bottom: 5px;
+        }
+
+        .detail-value {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: var(--secondary);
+        }
+
+        .patient-actions {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            min-width: 120px;
+        }
+
+        .btn-info {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-info:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: var(--danger-dark);
+            transform: translateY(-2px);
+        }
+
+        .waiting-queue {
+            background: var(--light);
+            padding: 25px;
+            border-radius: var(--border-radius);
+        }
+
+        .queue-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .queue-count {
+            background: var(--primary);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .patient-cards {
+            display: grid;
+            gap: 15px;
+        }
+
+        .patient-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+            transition: var(--transition);
+        }
+
+        .patient-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.12);
+        }
+
+        .patient-position {
+            background: var(--primary);
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .patient-info {
+            display: grid;
+            gap: 8px;
+        }
+
+        .patient-name {
+            font-weight: 600;
+            color: var(--secondary);
+            font-size: 1.1em;
+        }
+
+        .patient-meta {
+            display: flex;
+            justify-content: space-between;
+            color: var(--gray);
+            font-size: 0.9em;
+        }
+
         .refresh-indicator {
             position: fixed;
-            bottom: 10px;
-            right: 10px;
-            background: #f0f0f0;
-            padding: 5px 10px;
-            border-radius: 3px;
-            font-size: 12px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-        .patient-actions {
-            margin-top: 10px;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.95);
+            padding: 12px 20px;
+            border-radius: 25px;
+            font-size: 14px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.3);
             display: flex;
+            align-items: center;
             gap: 10px;
         }
-        .patient-actions button {
-            padding: 6px 12px;
-            font-size: 14px;
+
+        .refresh-icon {
+            animation: spin 2s linear infinite;
         }
-        #complete-btn {
-            background: #28a745;
-            color: white;
+
+        .last-updated {
+            font-weight: 600;
+            color: var(--primary);
         }
-        #skip-btn {
-            background: #6c757d;
-            color: white;
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
-        #announce-btn {
-            background: #17a2b8;
-            color: white;
+
+        @media (max-width: 968px) {
+            .counter-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .patient-details {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls {
+                justify-content: center;
+            }
         }
-        .waiting-time {
-            color: #6c757d;
-            font-size: 0.9em;
+
+        @media (max-width: 768px) {
+            .dashboard-container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+            
+            .main-content {
+                padding: 20px;
+            }
+            
+            .control-btn, .action-btn {
+                min-width: 100%;
+            }
+            
+            .patient-actions {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
 <body>
-    <h1>Staff Dashboard - {{ counter.counter_name }}</h1>
-    
-    <div class="counter-status {{ counter.current_status }}">
-        Current Status: {{ counter.get_current_status_display }}
-    </div>
-    
-    <div class="controls">
-        <button id="mark-available" onclick="updateCounterStatus('available')">Mark Available</button>
-        <button id="mark-busy" onclick="updateCounterStatus('busy')">Mark Busy</button>
-        <button id="mark-break" onclick="updateCounterStatus('break')">Go on Break</button>
-    </div>
-    
-    {% if handling_break_counter %}
-    <div class="break-notice">
-        <h3>⚠️ Handling Patients for Counter {{ handling_break_counter }}</h3>
-        <p>You are currently handling patients from {{ handling_break_counter }} while their staff is on break.</p>
-    </div>
-    {% endif %}
+    <div class="dashboard-container">
+        <div class="header">
+            <h1>Staff Dashboard</h1>
+            
+            {% if show_logout %}
+            <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; margin: 10px 0; border-radius: 5px;">
+                <p>You are already logged in. To login as a different user:</p>
+                <a href="{% url 'staff_logout' %}?tab_id={{ request.GET.tab_id }}" 
+                   style="background: #dc3545; color: white; padding: 8px 15px; text-decoration: none; border-radius: 4px;">
+                    Logout First
+                </a>
+                <p style="margin-top: 10px; font-size: 14px;">
+                    Or open a new browser tab/window to login as another user.
+                </p>
+            </div>
+            {% endif %}
 
-    {% if serving_patient %}
-    <div class="patient-card serving" id="serving-patient">
-        <h3>Currently Serving</h3>
-        <p><strong>Name:</strong> {{ serving_patient.patient.name }}</p>
-        <p><strong>Phone:</strong> {{ serving_patient.patient.phone_number }}</p>
-        <p><strong>Queue ID:</strong> {{ serving_patient.queue_id }}</p>
-        <div class="patient-actions">
-            <button id="announce-btn" onclick="announcePatient('{{ serving_patient.queue_id }}')">
-                Announce ({{ serving_patient.announcement_count }}/3)
-            </button>
-            <button id="complete-btn" onclick="serveNext()">Complete</button>
-            <button id="skip-btn" onclick="skipPatient('{{ serving_patient.queue_id }}')">Skip</button>
+            <div class="session-info">
+                <strong>Session Information</strong>
+                <div>Staff: {{ staff.username }} (ID: {{ staff.staff_id }})</div>
+                <div>Counter: {{ counter.counter_name }} (ID: {{ counter.counter_id }})</div>
+                <div>Service: {{ counter.service.service_name }}</div>
+                <div>Session Key: {{ request.session.session_key|slice:":8" }}...</div>
+                <div>Session Unique: {{ session_unique|slice:":8" }}...</div>
+                <div class="debug-buttons">
+                    <button class="btn btn-primary btn-sm" onclick="debugSession()">Debug Session</button>
+                    <button class="btn btn-secondary btn-sm" onclick="location.reload()">Refresh Page</button>
+                </div>
+            </div>
         </div>
-    </div>
-    {% endif %}
-    
-    <div class="patient-list">
-        <h2>Waiting Queue ({{ queue_entries.count }})</h2>
-        <div id="waiting-queue">
-            {% for patient in queue_entries %}
-            <div class="patient-card">
-                <p><strong>Name:</strong> {{ patient.patient.name }}</p>
-                <p><strong>Queue ID:</strong> {{ patient.queue_id }}</p>
-                <p class="waiting-time">Waiting: {{ patient.created_at|timesince }}</p>
+
+        <div class="main-content">
+            <div class="counter-section">
+                <div class="counter-card">
+                    <h2>Counter Information</h2>
+                    <div class="counter-info">
+                        <div class="info-row">
+                            <span class="info-label">Counter Name:</span>
+                            <span class="info-value" id="counter-name">{{ counter.counter_name }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Service:</span>
+                            <span class="info-value" id="service-name">{{ counter.service.service_name }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Staff:</span>
+                            <span class="info-value">{{ staff.username }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="counter-card">
+                    <h2>Current Status</h2>
+                    <div class="counter-info">
+                        <div class="info-row">
+                            <span class="info-label">Status:</span>
+                            <span class="info-value">
+                                <span class="status-badge status-{{ counter.current_status }}" id="status-text">
+                                    {{ counter.get_current_status_display }}
+                                </span>
+                            </span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Last Updated:</span>
+                            <span class="info-value" id="last-updated">Just now</span>
+                        </div>
+                    </div>
+                </div>
             </div>
-            {% empty %}
-            <div class="patient-card">
-                <p>No patients in queue</p>
+
+            <div class="controls">
+                <button class="control-btn btn-success" onclick="updateCounterStatus('available')">
+                    ✅ Mark Available
+                </button>
+                <button class="control-btn btn-warning" onclick="updateCounterStatus('break')">
+                    ⏸️ Go on Break
+                </button>
             </div>
-            {% endfor %}
+
+            <div class="start-serving-section" id="start-serving-section" style="display: none;">
+                <h3>Queue Management</h3>
+                <button class="start-serving-btn" id="start-serving-btn" onclick="startServing()">
+                    🔄 Start Serving Next Patient
+                </button>
+            </div>
+
+            <div class="patient-section">
+                <div id="serving-patient-container"></div>
+
+                <div class="waiting-queue">
+                    <div class="queue-header">
+                        <h3 class="section-title">Waiting Queue</h3>
+                        <span class="queue-count" id="queue-title">0 patients</span>
+                    </div>
+                    <div class="patient-cards" id="waiting-queue">
+                        <div class="patient-card">
+                            <div class="patient-position">-</div>
+                            <div class="patient-info">
+                                <div class="patient-name">Loading patients...</div>
+                                <div class="patient-meta">
+                                    <span>Please wait</span>
+                                    <span>--:--</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
     <div class="refresh-indicator" id="refresh-indicator">
-        Last updated: <span id="last-updated">Just now</span>
+        <span class="refresh-icon">🔄</span>
+        Last updated: <span class="last-updated" id="last-updated-time">Just now</span>
     </div>
 
     <script>
-        // Auto-refresh every 5 seconds
-        let refreshInterval = setInterval(fetchQueueData, 5000);
+        // Auto-refresh every 3 seconds
+        let refreshInterval = setInterval(fetchQueueData, 3000);
         
         // Enhanced queue data fetching
         function fetchQueueData() {
@@ -181,98 +610,181 @@
                 })
                 .then(data => {
                     updateQueueDisplay(data);
-                    document.getElementById('last-updated').textContent = new Date().toLocaleTimeString();
+                    document.getElementById('last-updated-time').textContent = new Date().toLocaleTimeString();
                 })
                 .catch(error => {
                     console.error('Error fetching queue:', error);
-                    document.getElementById('last-updated').textContent = 'Update failed - ' + new Date().toLocaleTimeString();
+                    document.getElementById('last-updated-time').textContent = 'Update failed - ' + new Date().toLocaleTimeString();
+                });
+        }
+
+        const tabId = '{{ request.session.tab_id }}' || 'tab_' + Date.now();
+        
+        // Store tab ID in session storage for this tab
+        sessionStorage.setItem('staff_tab_id', tabId);
+        
+        // Modify all URLs to include tab ID
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add tab ID to all links
+            const links = document.querySelectorAll('a[href^="/staff/"]');
+            links.forEach(link => {
+                const url = new URL(link.href);
+                url.searchParams.set('tab_id', tabId);
+                link.href = url.toString();
+            });
+        });
+
+        // Override global fetch to include tab ID
+        const originalFetch = window.fetch;
+        window.fetch = function(url, options) {
+            if (typeof url === 'string' && url.startsWith('/staff/')) {
+                const urlObj = new URL(url, window.location.origin);
+                urlObj.searchParams.set('tab_id', tabId);
+                
+                if (options && options.body && typeof options.body === 'string') {
+                    // For form data
+                    options.body += `&tab_id=${encodeURIComponent(tabId)}`;
+                }
+                
+                return originalFetch.call(this, urlObj.toString(), options);
+            }
+            return originalFetch.call(this, url, options);
+        };
+
+        function debugSession() {
+            fetch('/staff/debug_session/')
+                .then(response => response.json())
+                .then(data => {
+                    alert(`Session Debug:\nStaff: ${data.staff}\nCounter: ${data.counter}\nSession Key: ${data.session_key}`);
                 });
         }
 
         function updateQueueDisplay(data) {
+            console.log('Updating queue display with data:', data);
+            
+            // Update counter information
+            const counterNameEl = document.getElementById('counter-name');
+            const serviceNameEl = document.getElementById('service-name');
+            if (counterNameEl) counterNameEl.textContent = data.counter_name;
+            if (serviceNameEl) serviceNameEl.textContent = data.service_name;
+            
             // Update counter status display
-            const statusDiv = document.querySelector('.counter-status');
-            statusDiv.className = `counter-status ${data.counter_status}`;
-            statusDiv.textContent = `Current Status: ${data.counter_status.charAt(0).toUpperCase() + data.counter_status.slice(1)}`;
+            const statusDiv = document.getElementById('status-text');
+            if (statusDiv) {
+                statusDiv.className = `status-badge status-${data.counter_status}`;
+                statusDiv.textContent = data.counter_status.charAt(0).toUpperCase() + data.counter_status.slice(1);
+            }
+            
+            // Show/Hide start serving section
+            const startServingSection = document.getElementById('start-serving-section');
+            if (data.serving_patient) {
+                startServingSection.style.display = 'none';
+            } else if (data.queue_count > 0 && data.counter_status === 'available') {
+                startServingSection.style.display = 'block';
+            } else {
+                startServingSection.style.display = 'none';
+            }
             
             // Update serving patient
-            const servingContainer = document.getElementById('serving-patient');
-            if (data.serving_patient) {
-                if (!servingContainer) {
-                    // Create serving patient section if it doesn't exist
-                    const newServingDiv = document.createElement('div');
-                    newServingDiv.className = 'patient-card serving';
-                    newServingDiv.id = 'serving-patient';
-                    newServingDiv.innerHTML = `
-                        <h3>Currently Serving</h3>
-                        <p><strong>Name:</strong> ${data.serving_patient.name}</p>
-                        <p><strong>Phone:</strong> ${data.serving_patient.phone || 'N/A'}</p>
-                        <p><strong>Queue ID:</strong> ${data.serving_patient.queue_id}</p>
-                        <div class="patient-actions">
-                            <button id="announce-btn" onclick="announcePatient('${data.serving_patient.queue_id}')">
-                                Announce (${data.serving_patient.announcement_count}/3)
-                            </button>
-                            <button id="complete-btn" onclick="serveNext()">Complete</button>
-                            <button id="skip-btn" onclick="skipPatient('${data.serving_patient.queue_id}')">Skip</button>
+            const servingContainer = document.getElementById('serving-patient-container');
+            if (data.serving_patient && data.serving_patient.queue_id) {
+                servingContainer.innerHTML = `
+                    <div class="serving-container">
+                        <h3>Currently Serving Patient</h3>
+                        <div class="patient-details">
+                            <div class="detail-card">
+                                <div class="detail-label">Name</div>
+                                <div class="detail-value">${data.serving_patient.name || 'N/A'}</div>
+                            </div>
+                            <div class="detail-card">
+                                <div class="detail-label">Phone</div>
+                                <div class="detail-value">${data.serving_patient.phone || 'N/A'}</div>
+                            </div>
+                            <div class="detail-card">
+                                <div class="detail-label">Queue ID</div>
+                                <div class="detail-value">${data.serving_patient.queue_id}</div>
+                            </div>
+                            <div class="detail-card">
+                                <div class="detail-label">Service</div>
+                                <div class="detail-value">${data.serving_patient.service_name || 'N/A'}</div>
+                            </div>
                         </div>
-                    `;
-                    document.querySelector('.patient-list').before(newServingDiv);
-                } else {
-                    // Update existing serving patient
-                    const announceBtn = servingContainer.querySelector('#announce-btn');
-                    announceBtn.textContent = `Announce (${data.serving_patient.announcement_count}/3)`;
-                }
-            } else if (servingContainer) {
-                // Remove serving patient section if no one is being served
-                servingContainer.remove();
+                        <div class="patient-actions">
+                            <button class="action-btn btn-info" onclick="announcePatient('${data.serving_patient.queue_id}')">
+                                📢 Announce (${data.serving_patient.announcement_count || 0}/3)
+                            </button>
+                            <button class="action-btn btn-success" onclick="serveNext()">
+                                ✅ Complete
+                            </button>
+                            <button class="action-btn btn-danger" onclick="skipPatient('${data.serving_patient.queue_id}')">
+                                ⏭️ Skip
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                servingContainer.innerHTML = '';
             }
             
             // Update waiting queue
             const queueContainer = document.getElementById('waiting-queue');
-            let html = '';
-            
-            if (data.waiting_patients.length > 0) {
-                data.waiting_patients.forEach(patient => {
-                    html += `
+            if (queueContainer) {
+                let html = '';
+                
+                if (data.waiting_patients && data.waiting_patients.length > 0) {
+                    data.waiting_patients.forEach((patient, index) => {
+                        html += `
+                        <div class="patient-card">
+                            <div class="patient-position">${index + 1}</div>
+                            <div class="patient-info">
+                                <div class="patient-name">${patient.name}</div>
+                                <div class="patient-meta">
+                                    <span>${patient.queue_id}</span>
+                                    <span>${patient.waiting_time}</span>
+                                </div>
+                            </div>
+                        </div>`;
+                    });
+                } else {
+                    html = `
                     <div class="patient-card">
-                        <p><strong>Name:</strong> ${patient.name}</p>
-                        <p><strong>Queue ID:</strong> ${patient.queue_id}</p>
-                        <p class="waiting-time">Waiting: ${patient.waiting_time}</p>
+                        <div class="patient-position">-</div>
+                        <div class="patient-info">
+                            <div class="patient-name">No patients in queue</div>
+                            <div class="patient-meta">
+                                <span>All clear!</span>
+                                <span>--:--</span>
+                            </div>
+                        </div>
                     </div>`;
-                });
-            } else {
-                html = '<div class="patient-card"><p>No patients in queue</p></div>';
-            }
-            queueContainer.innerHTML = html;
-            
-            // Update break notice if needed
-            const breakNotice = document.querySelector('.break-notice');
-            if (data.handling_break_counter) {
-                if (!breakNotice) {
-                    const newBreakNotice = document.createElement('div');
-                    newBreakNotice.className = 'break-notice';
-                    newBreakNotice.innerHTML = `
-                        <h3>⚠️ Handling Patients for Counter ${data.handling_break_counter}</h3>
-                        <p>You are currently handling patients from ${data.handling_break_counter} while their staff is on break.</p>
-                    `;
-                    document.querySelector('.controls').after(newBreakNotice);
                 }
-            } else if (breakNotice) {
-                breakNotice.remove();
+                
+                queueContainer.innerHTML = html;
+                
+                // Update queue count in title
+                const queueTitle = document.getElementById('queue-title');
+                if (queueTitle) {
+                    queueTitle.textContent = `${data.queue_count || 0} patient${data.queue_count !== 1 ? 's' : ''}`;
+                }
             }
+            
+            document.getElementById('last-updated').textContent = new Date().toLocaleTimeString();
         }
 
         function updateCounterStatus(status) {
-            const buttons = document.querySelectorAll('.controls button');
+            const buttons = document.querySelectorAll('.control-btn');
             buttons.forEach(btn => btn.disabled = true);
+            
+            const formData = new URLSearchParams();
+            formData.append('status', status);
             
             fetch('/staff/update_status/', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/x-www-form-urlencoded',
                     'X-CSRFToken': getCookie('csrftoken')
                 },
-                body: JSON.stringify({ status: status })
+                body: formData
             })
             .then(response => {
                 buttons.forEach(btn => btn.disabled = false);
@@ -291,84 +803,102 @@
         }
 
         function serveNext() {
-            const btn = document.querySelector('#complete-btn');
-            btn.disabled = true;
-            btn.textContent = 'Processing...';
+            console.log('serveNext called');
             
             fetch('/staff/serve_next/', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/x-www-form-urlencoded',
                     'X-CSRFToken': getCookie('csrftoken')
                 }
             })
             .then(response => {
-                btn.disabled = false;
-                btn.textContent = 'Complete';
-                if (!response.ok) throw new Error('Failed to complete');
+                if (!response.ok) {
+                    console.error('Server returned error:', response.status);
+                    throw new Error('Failed to serve next patient');
+                }
                 return response.json();
             })
             .then(data => {
+                console.log('Response data:', data);
                 if (data.status === 'success') {
+                    alert(`Completed serving patient. Now serving: ${data.patient_name}`);
                     fetchQueueData();
+                } else if (data.status === 'empty') {
+                    alert('No more patients in queue');
+                    fetchQueueData();
+                } else {
+                    alert('Error: ' + (data.message || 'Unknown error'));
                 }
             })
             .catch(error => {
+                console.error('Error:', error);
                 alert('Error: ' + error.message);
             });
         }
 
         function skipPatient(queueId) {
+            console.log('skipPatient called with queueId:', queueId);
+            
             if (!confirm('Are you sure you want to skip this patient?')) return;
             
-            const btn = document.querySelector('#skip-btn');
-            btn.disabled = true;
-            btn.textContent = 'Processing...';
+            const formData = new URLSearchParams();
+            formData.append('queue_id', queueId);
             
             fetch('/staff/skip_patient/', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/x-www-form-urlencoded',
                     'X-CSRFToken': getCookie('csrftoken')
                 },
-                body: JSON.stringify({ queue_id: queueId })
+                body: formData
             })
             .then(response => {
-                btn.disabled = false;
-                btn.textContent = 'Skip';
-                if (!response.ok) throw new Error('Failed to skip');
+                if (!response.ok) {
+                    console.error('Server returned error:', response.status);
+                    throw new Error('Failed to skip patient');
+                }
                 return response.json();
             })
             .then(data => {
+                console.log('Response data:', data);
                 if (data.status === 'success') {
+                    alert('Patient skipped successfully');
                     fetchQueueData();
+                } else {
+                    alert('Error: ' + (data.message || 'Unknown error'));
                 }
             })
             .catch(error => {
+                console.error('Error:', error);
                 alert('Error: ' + error.message);
             });
         }
 
         function announcePatient(queueId) {
-            const btn = document.querySelector('#announce-btn');
-            btn.disabled = true;
+            console.log('announcePatient called with queueId:', queueId);
+            
+            const formData = new URLSearchParams();
+            formData.append('queue_id', queueId);
             
             fetch('/staff/announce_patient/', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/x-www-form-urlencoded',
                     'X-CSRFToken': getCookie('csrftoken')
                 },
-                body: JSON.stringify({ queue_id: queueId })
+                body: formData
             })
             .then(response => {
-                btn.disabled = false;
-                if (!response.ok) throw new Error('Failed to announce');
+                if (!response.ok) {
+                    console.error('Server returned error:', response.status);
+                    throw new Error('Failed to announce patient');
+                }
                 return response.json();
             })
             .then(data => {
+                console.log('Response data:', data);
                 if (data.status === 'announced') {
-                    btn.textContent = `Announce (${data.count}/3)`;
                     alert(`Patient announced (${data.count}/3)`);
                     fetchQueueData();
                 } else if (data.status === 'skipped') {
@@ -381,10 +911,48 @@
                 }
             })
             .catch(error => {
+                console.error('Error:', error);
                 alert('Error: ' + error.message);
             });
         }
 
+        function startServing() {
+            const btn = document.querySelector('#start-serving-btn');
+            if (!btn) return;
+            
+            btn.disabled = true;
+            btn.textContent = 'Processing...';
+            
+            fetch('/staff/start_serving/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Failed to start serving');
+                return response.json();
+            })
+            .then(data => {
+                if (data.status === 'success') {
+                    alert(`Now serving: ${data.patient.name} (${data.patient.queue_id})`);
+                    fetchQueueData();
+                } else if (data.status === 'empty') {
+                    alert('No patients waiting in queue');
+                } else {
+                    alert('Error: ' + (data.message || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                alert('Error: ' + error.message);
+            })
+            .finally(() => {
+                btn.disabled = false;
+                btn.textContent = '🔄 Start Serving Next Patient';
+            });
+        }
+        
         function getCookie(name) {
             let cookieValue = null;
             if (document.cookie && document.cookie !== '') {
@@ -406,17 +974,35 @@
             socketProtocol + window.location.host + '/ws/queue/updates/'
         );
         
-        socket.onmessage = function(e) {
-            const data = JSON.parse(e.data);
-            if (data.counter_id === {{ counter.counter_id }}) {
-                fetchQueueData();
+        socket.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            console.log('WebSocket message received:', data);
+            
+            // Handle different message types
+            switch(data.action) {
+                case 'new_patient':
+                    console.log('New patient joined:', data.patient_name);
+                    fetchQueueData();
+                    break;
+                case 'patient_served':
+                    console.log('Patient served:', data.queue_id);
+                    fetchQueueData();
+                    break;
+                case 'patient_redistributed':
+                    fetchQueueData();
+                    break;
+                case 'counter_status_update':
+                    fetchQueueData();
+                    break;
+                default:
+                    fetchQueueData();
             }
         };
 
         socket.onclose = function() {
             console.log('WebSocket disconnected, falling back to polling');
             clearInterval(refreshInterval);
-            refreshInterval = setInterval(fetchQueueData, 5000);
+            refreshInterval = setInterval(fetchQueueData, 3000);
         };
 
         // Initial load
