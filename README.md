@@ -1,135 +1,157 @@
-# Queue Management System
-
+Queue Management System
 A comprehensive queue management system designed for healthcare facilities to manage patient flow for OPD (Outpatient Department) and test services. The system includes QR code scanning, OTP-based authentication, real-time updates, and a display screen for announcements.
 
-## Table of Contents
+Table of Contents
+Features
 
-- [Features](#features)
-- [System Architecture](#system-architecture)
-- [Prerequisites](#prerequisites)
-- [Installation](#installation)
-- [Database Setup](#database-setup)
-- [Configuration](#configuration)
-- [Running the Application](#running-the-application)
-- [Usage Guide](#usage-guide)
-- [API Endpoints](#api-endpoints)
-- [WebSocket Events](#websocket-events)
-- [File Structure](#file-structure)
-- [Troubleshooting](#troubleshooting)
-- [Contributing](#contributing)
-- [License](#license)
+System Architecture
 
-## Features
+Prerequisites
 
-### Patient Features
-- QR code scanning for easy access
-- OTP-based phone verification
-- Service selection (OPD/Test)
-- Queue position tracking
-- Real-time status updates
-- Patient dashboard with queue information
+Installation
 
-### Staff Features
-- Secure staff authentication
-- Counter management
-- Patient queue management
-- Serve/Skip patient functionality
-- Counter status management (Available, Busy, Break)
-- Break handling with patient redistribution
-- Real-time queue updates
+Database Setup
 
-### System Features
-- Display screen with announcements
-- Real-time WebSocket updates
-- Queue history tracking
-- Automatic patient redistribution during breaks
-- Audio announcements (3 times per patient call)
+Configuration
 
-## System Architecture
+Running the Application
 
-- **Backend**: Django + Django REST Framework
-- **Database**: MySQL
-- **Real-time Communication**: WebSockets (Django Channels)
-- **Authentication**: OTP-based phone verification
-- **Frontend**: HTML, CSS, JavaScript
-- **API**: RESTful APIs
+Usage Guide
 
-## Prerequisites
+API Endpoints
 
-- Python 3.8+
-- MySQL 5.7+
-- Redis (for production WebSocket layer)
-- SMS Gateway service (for OTP)
+WebSocket Events
 
-## Installation
+File Structure
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/yourusername/queue-management-system.git
-   cd queue-management-system
-   ```
+Troubleshooting
 
-2. **Create virtual environment**
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
+Contributing
 
-3. **Install dependencies**
-   ```bash
-   pip install django djangorestframework channels mysql-connector-python channels-redis
-   ```
+License
 
-4. **Create Django project structure**
-   ```bash
-   django-admin startproject queue_system
-   cd queue_system
-   python manage.py startapp queue_app
-   ```
+Features
+Patient Features
+QR code scanning for easy access
 
-## Database Setup
+OTP-based phone verification with actual SMS delivery
 
-1. **Create MySQL database**
-   ```sql
-   CREATE DATABASE queue_system;
-   CREATE USER 'queue_user'@'localhost' IDENTIFIED BY 'your_password';
-   GRANT ALL PRIVILEGES ON queue_system.* TO 'queue_user'@'localhost';
-   FLUSH PRIVILEGES;
-   ```
+Service selection (OPD/Test)
 
-2. **Configure database settings in `settings.py`**
-   ```python
-   DATABASES = {
-       'default': {
-           'ENGINE': 'django.db.backends.mysql',
-           'NAME': 'queue_system',
-           'USER': 'queue_user',
-           'PASSWORD': 'your_password',
-           'HOST': 'localhost',
-           'PORT': '3306',
-           'OPTIONS': {
-               'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-           },
-       }
-   }
-   ```
+Queue position tracking
 
-3. **Run migrations**
-   ```bash
-   python manage.py makemigrations
-   python manage.py migrate
-   ```
+Real-time status updates
 
-4. **Create superuser**
-   ```bash
-   python manage.py createsuperuser
-   ```
+Patient dashboard with queue information and beautiful status messages
 
-## Configuration
+Staff Features
+Secure staff authentication with session management
 
-### 1. Update `settings.py`
+Counter management
 
-```python
+Patient queue management
+
+Serve/Skip patient functionality
+
+Counter status management (Available, Busy, Break)
+
+Break handling with patient redistribution
+
+Real-time queue updates
+
+System Features
+Display screen with announcements in tabular format
+
+Real-time WebSocket updates
+
+Queue history tracking
+
+Automatic patient redistribution during breaks
+
+Audio announcements (3 times per patient call)
+
+Twilio SMS integration for OTP delivery
+
+System Architecture
+Backend: Django + Django REST Framework
+
+Database: MySQL
+
+Real-time Communication: WebSockets (Django Channels)
+
+Authentication: OTP-based phone verification with SMS
+
+SMS Service: Twilio integration
+
+Frontend: HTML, CSS, JavaScript
+
+API: RESTful APIs
+
+Prerequisites
+Python 3.8+
+
+MySQL 5.7+
+
+Twilio account (for OTP SMS)
+
+Redis (for production WebSocket layer - optional)
+
+Installation
+Clone the repository
+
+bash
+git clone https://github.com/yourusername/queue-management-system.git
+cd queue-management-system
+Create virtual environment
+
+bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+Install dependencies
+
+bash
+pip install django djangorestframework channels mysql-connector-python twilio
+Create Django project structure
+
+bash
+django-admin startproject queue_system .
+python manage.py startapp queue_app
+Database Setup
+Create MySQL database
+
+sql
+CREATE DATABASE queue_system;
+CREATE USER 'queue_user'@'localhost' IDENTIFIED BY 'your_password';
+GRANT ALL PRIVILEGES ON queue_system.* TO 'queue_user'@'localhost';
+FLUSH PRIVILEGES;
+Configure database settings in settings.py
+
+python
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'queue_system',
+        'USER': 'queue_user',
+        'PASSWORD': 'your_password',
+        'HOST': 'localhost',
+        'PORT': '3306',
+        'OPTIONS': {
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+        },
+    }
+}
+Run migrations
+
+bash
+python manage.py makemigrations
+python manage.py migrate
+Create superuser
+
+bash
+python manage.py createsuperuser
+Configuration
+1. Update settings.py
+python
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -142,34 +164,32 @@ INSTALLED_APPS = [
     'queue_app',
 ]
 
+# Twilio Configuration for OTP SMS
+TWILIO_ACCOUNT_SID = 'your_twilio_account_sid_here'
+TWILIO_AUTH_TOKEN = 'your_twilio_auth_token_here'
+TWILIO_PHONE_NUMBER = 'your_twilio_phone_number'  # Format: +1234567890
+
 # Channels Configuration
 ASGI_APPLICATION = 'queue_system.asgi.application'
 CHANNEL_LAYERS = {
     'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            "hosts": [('127.0.0.1', 6379)],
-        },
-        # For development without Redis:
-        # 'BACKEND': 'channels.layers.InMemoryChannelLayer',
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+        # For production with Redis:
+        # 'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        # 'CONFIG': {
+        #     "hosts": [('127.0.0.1', 6379)],
+        # },
     },
 }
 
-# REST Framework Configuration
-REST_FRAMEWORK = {
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',
-    ]
-}
-
-# SMS Configuration (Add your SMS provider settings)
-SMS_API_KEY = 'your_sms_api_key'
-SMS_API_URL = 'your_sms_provider_url'
-```
-
-### 2. Configure URLs (`urls.py`)
-
-```python
+# Session settings for staff authentication
+SESSION_COOKIE_NAME = 'queuesystem_staff_session'
+SESSION_COOKIE_AGE = 3600
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_SAVE_EVERY_REQUEST = True
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+2. Configure URLs (urls.py)
+python
 from django.contrib import admin
 from django.urls import path, include
 
@@ -177,23 +197,21 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('queue_app.urls')),
 ]
-```
-
-### 3. Create `queue_app/urls.py`
-
-```python
+3. Create queue_app/urls.py
+python
 from django.urls import path
 from . import views
 
 urlpatterns = [
     # Patient URLs
-    path('', views.patient_login, name='patient_login'),
+    path('', views.home_redirect, name='home_redirect'),
+    path('patient/login/', views.patient_login, name='patient_login'),
     path('send_otp/', views.send_otp_view, name='send_otp'),
     path('verify_otp/', views.verify_otp_view, name='verify_otp'),
     path('check_patient/', views.check_patient, name='check_patient'),
-    path('service_selection/', views.service_selection, name='service_selection'),
-    path('join_queue/', views.join_queue, name='join_queue'),
-    path('patient_dashboard/', views.patient_dashboard, name='patient_dashboard'),
+    path('service/selection/', views.service_selection, name='service_selection'),
+    path('queue/join/', views.join_queue, name='join_queue'),
+    path('dashboard/', views.patient_dashboard, name='patient_dashboard'),
     
     # Staff URLs
     path('staff/login/', views.staff_login, name='staff_login'),
@@ -201,16 +219,22 @@ urlpatterns = [
     path('staff/serve_next/', views.serve_next, name='serve_next'),
     path('staff/skip_patient/', views.skip_patient, name='skip_patient'),
     path('staff/update_status/', views.update_counter_status, name='update_counter_status'),
+    path('staff/announce_patient/', views.announce_patient, name='announce_patient'),
+    path('staff/get_queue_data/', views.get_queue_data, name='get_queue_data'),
+    path('staff/logout/', views.staff_logout, name='staff_logout'),
     
     # Display URLs
     path('display/', views.display_screen, name='display_screen'),
+    path('display/screen/data/', views.display_screen_data, name='display_screen_data'),
+    
+    # Debug URLs
+    path('debug/counters/', views.debug_counters, name='debug_counters'),
+    path('debug/session/', views.debug_session, name='debug_session'),
 ]
-```
+4. Configure WebSocket routing
+Create queue_system/asgi.py:
 
-### 4. Configure WebSocket routing
-
-Create `queue_system/asgi.py`:
-```python
+python
 import os
 from django.core.asgi import get_asgi_application
 from channels.routing import ProtocolTypeRouter, URLRouter
@@ -227,117 +251,108 @@ application = ProtocolTypeRouter({
         )
     ),
 })
-```
+Create queue_app/routing.py:
 
-## Running the Application
+python
+from django.urls import re_path
+from . import consumers
 
-### Development Mode
+websocket_urlpatterns = [
+    re_path(r'ws/queue/updates/$', consumers.QueueUpdatesConsumer.as_asgi()),
+]
+Running the Application
+Development Mode
+Run Django development server
 
-1. **Start Redis server** (if using Redis for channels)
-   ```bash
-   redis-server
-   ```
+bash
+python manage.py runserver
+Run ASGI server for WebSockets
 
-2. **Run Django development server**
-   ```bash
-   python manage.py runserver
-   ```
+bash
+daphne queue_system.asgi:application --port 8001
+Production Mode
+Install production dependencies
 
-3. **Run ASGI server for WebSockets** (in another terminal)
-   ```bash
-   daphne -p 8001 queue_system.asgi:application
-   ```
+bash
+pip install gunicorn daphne
+Run with Gunicorn and Daphne
 
-### Production Mode
+bash
+# Terminal 1 - HTTP
+gunicorn queue_system.wsgi:application -b 0.0.0.0:8000
 
-1. **Install production dependencies**
-   ```bash
-   pip install gunicorn daphne nginx
-   ```
+# Terminal 2 - WebSockets
+daphne queue_system.asgi:application -b 0.0.0.0:8001
+Usage Guide
+For Patients
+Visit the application URL
 
-2. **Configure Nginx** (`/etc/nginx/sites-available/queue_system`)
-   ```nginx
-   server {
-       listen 80;
-       server_name your-domain.com;
+Enter phone number and name (for new users) or just phone number (for existing users)
 
-       location / {
-           proxy_pass http://127.0.0.1:8000;
-           proxy_set_header Host $host;
-           proxy_set_header X-Real-IP $remote_addr;
-       }
+Verify OTP sent to your phone via SMS
 
-       location /ws/ {
-           proxy_pass http://127.0.0.1:8001;
-           proxy_http_version 1.1;
-           proxy_set_header Upgrade $http_upgrade;
-           proxy_set_header Connection "upgrade";
-       }
+Select service (OPD or Test)
 
-       location /static/ {
-           alias /path/to/your/staticfiles/;
-       }
-   }
-   ```
+Get queue ID and wait for your turn
 
-3. **Run with Gunicorn and Daphne**
-   ```bash
-   gunicorn queue_system.wsgi: application
-   daphne queue_system.asgi: application
-   ```
+Monitor dashboard for real-time updates with beautiful status messages
 
-## Usage Guide
+For Staff
+Login with username and password
 
-### For Patients
+Manage patient queue from your dashboard
 
-1. **Scan QR Code or visit the URL**
-2. **Enter phone number and name** (for new users) or **just phone number** (for existing users)
-3. **Verify OTP** sent to your phone
-4. **Select service** (OPD or Test)
-5. **Get queue ID** and wait for your turn
-6. **Monitor dashboard** for real-time updates
+Call next patient or skip if patient is absent
 
-### For Staff
+Update counter status (Available, Busy, Break)
 
-1. **Login with username and password**
-2. **Select your role** (Operator, Supervisor, Admin)
-3. **Manage patient queue** from your dashboard
-4. **Call next patient** or **skip** if patient is absent
-5. **Update counter status** (Available, Busy, Break)
+Announce patients (calls 3 times with audio)
 
-### Display Screen
+Display Screen
+Shows all counters in tabular format with current serving patients
 
-- Shows all counters with current serving patients
-- Updates in real-time via WebSocket
-- Announces patient names 3 times
+Updates in real-time via WebSocket
 
-## API Endpoints
+Announces patient names 3 times with audio
 
-### Authentication
-- `POST /send_otp/` - Send OTP to phone number
-- `POST /verify_otp/` - Verify OTP and login
-- `GET /check_patient/` - Check if patient exists
+Accessible at /display/
 
-### Queue Management
-- `POST /join_queue/` - Join a service queue
-- `GET /patient_dashboard/` - Get patient dashboard data
-- `POST /staff/serve_next/` - Serve next patient
-- `POST /staff/skip_patient/` - Skip current patient
-- `POST /staff/update_status/` - Update counter status
+API Endpoints
+Authentication
+POST /send_otp/ - Send OTP to phone number (via SMS)
 
-### Real-time Updates
-- `WS /ws/queue/updates/` - WebSocket for real-time updates
+POST /verify_otp/ - Verify OTP and login
 
-## WebSocket Events
+GET /check_patient/ - Check if patient exists
 
-### Client Receives:
-- `initial_data` - Initial counter and queue data
-- `queue_update` - Real-time queue updates
-- `counter_status_update` - Counter status changes
-- `patient_called` - Patient announcement
+Queue Management
+POST /queue/join/ - Join a service queue
 
-### Event Format:
-```json
+GET /dashboard/ - Get patient dashboard data
+
+POST /staff/serve_next/ - Serve next patient
+
+POST /staff/skip_patient/ - Skip current patient
+
+POST /staff/update_status/ - Update counter status
+
+POST /staff/announce_patient/ - Announce patient
+
+Real-time Updates
+WS /ws/queue/updates/ - WebSocket for real-time updates
+
+WebSocket Events
+Client Receives:
+new_patient - New patient joined queue
+
+patient_served - Patient served
+
+patient_redistributed - Patient moved to different counter
+
+counter_status_update - Counter status changed
+
+Event Format:
+json
 {
     "type": "queue_update",
     "counter_id": 1,
@@ -347,11 +362,8 @@ application = ProtocolTypeRouter({
     },
     "queue_length": 5
 }
-```
-
-## File Structure
-
-```
+File Structure
+text
 queue_system/
 ├── queue_system/
 │   ├── __init__.py
@@ -369,6 +381,7 @@ queue_system/
 │   ├── consumers.py
 │   ├── routing.py
 │   ├── utils.py
+│   ├── middleware.py
 │   ├── migrations/
 │   └── templates/
 │       ├── patient_login.html
@@ -381,114 +394,120 @@ queue_system/
 ├── media/
 ├── requirements.txt
 └── manage.py
-```
+Troubleshooting
+Common Issues
+Database Connection Error
 
-## Troubleshooting
+Check MySQL service is running
 
-### Common Issues
+Verify database credentials in settings.py
 
-1. **Database Connection Error**
-   - Check the MySQL service is running
-   - Verify database credentials in settings.py
-   - Ensure database exists
+Ensure database exists
 
-2. **WebSocket Not Connecting**
-   - Check the Redis server is running
-   - Verify the ASGI application is running on the correct port
-   - Check firewall settings
+OTP Not Sending
 
-3. **OTP Not Sending**
-   - Verify SMS gateway configuration
-   - Check API credentials
-   - Ensure phone number format is correct
+Verify Twilio credentials in settings.py
 
-4. **Static Files Not Loading**
-   - Run `python manage.py collectstatic`
-   - Check STATIC_URL and STATIC_ROOT settings
+Check phone number format
 
-### Logs
+Ensure sufficient Twilio balance
 
-- Django logs: Check console output
-- Database logs: Check MySQL error logs
-- WebSocket logs: Check Daphne output
+WebSocket Not Connecting
 
-## Initial Data Setup
+Check Daphne server is running
 
-1. **Create Services**
-   ```python
-   # Using Django shell: python manage.py shell
-   from queue_app.models import Service
-   
-   Service.objects.create(
-       service_name='OPD',
-       description='Outpatient Department',
-       week_days=1,  # Monday
-       is_active=True
-   )
-   
-   Service.objects.create(
-       service_name='Test',
-       description='Laboratory Tests',
-       week_days=1,  # Monday
-       is_active=True
-   )
-   ```
+Verify WebSocket URL in templates
 
-2. **Create Counters**
-   ```python
-   from queue_app.models import Counter, Service
-   from datetime import time
-   
-   opd_service = Service.objects.get(service_name='OPD')
-   test_service = Service.objects.get(service_name='Test')
-   
-   Counter.objects.create(
-       counter_name='Counter 1',
-       service=opd_service,
-       start_time=time(9, 0),
-       end_time=time(17, 0),
-       current_status='available'
-   )
-   
-   Counter.objects.create(
-       counter_name='Counter 2',
-       service=test_service,
-       start_time=time(9, 0),
-       end_time=time(17, 0),
-       current_status='available'
-   )
-   ```
+Session Mixing Issues
 
-3. **Create Staff Users**
-   ```python
-   from queue_app.models import Staff
-   
-   Staff.objects.create(
-       username='operator1',
-       password='password123',  # Use proper hashing in production
-       role='operator',
-       is_active=True
-   )
-   ```
+Ensure proper session management middleware
 
-## Security Considerations
+Use different browser tabs for different staff logins
 
-- Use HTTPS in production
-- Implement proper password hashing for staff accounts
-- Add rate limiting for OTP requests
-- Validate and sanitize all user inputs
-- Use CSRF protection
-- Implement proper session management
+Logs
+Django logs: Check console output
 
-## Contributing
+Database logs: Check MySQL error logs
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests
-5. Submit a pull request
+WebSocket logs: Check Daphne output
 
-## License
+Initial Data Setup
+Create Services
+python
+# Using Django shell: python manage.py shell
+from queue_app.models import Service
 
+Service.objects.create(
+    service_name='OPD',
+    description='Outpatient Department',
+    week_days=1,  # Monday
+    is_active=True
+)
+
+Service.objects.create(
+    service_name='Test',
+    description='Laboratory Tests',
+    week_days=1,  # Monday
+    is_active=True
+)
+Create Counters
+python
+from queue_app.models import Counter, Service
+from datetime import time
+
+opd_service = Service.objects.get(service_name='OPD')
+test_service = Service.objects.get(service_name='Test')
+
+Counter.objects.create(
+    counter_name='Counter 1',
+    service=opd_service,
+    start_time=time(9, 0),
+    end_time=time(17, 0),
+    current_status='available'
+)
+
+Counter.objects.create(
+    counter_name='Counter 2',
+    service=test_service,
+    start_time=time(9, 0),
+    end_time=time(17, 0),
+    current_status='available'
+)
+Create Staff Users
+python
+from queue_app.models import Staff
+
+Staff.objects.create(
+    username='operator1',
+    password='password123',  # Will be hashed automatically
+    role='operator',
+    is_active=True
+)
+Security Considerations
+Use HTTPS in production
+
+Implement proper password hashing for staff accounts
+
+Add rate limiting for OTP requests
+
+Validate and sanitize all user inputs
+
+Use CSRF protection
+
+Implement proper session management
+
+Secure Twilio credentials
+
+Contributing
+Fork the repository
+
+Create a feature branch
+
+Make your changes
+
+Add tests
+
+Submit a pull request
+
+License
 This project is licensed under the MIT License - see the LICENSE file for details.
-
