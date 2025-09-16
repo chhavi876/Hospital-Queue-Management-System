@@ -29,13 +29,21 @@ urlpatterns = [
     path('staff/skip_patient/', views.skip_patient, name='skip_patient'),
     path('staff/dashboard/', views.staff_dashboard, name='staff_dashboard'),
     path('service_selection/', views.service_selection, name='service_selection'),
-    path('staff/serve-next/', views.serve_next, name='serve_next'),
-    path('staff/skip-patient/', views.skip_patient, name='skip_patient'),
-    path('staff/update-status/', views.update_counter_status, name='update_counter_status'),
-    path('ws/queue/updates/', consumers.QueueConsumer.as_asgi()),
+    path('staff/serve_next/', views.serve_next, name='serve_next'),
+    path('staff/handle_break/', views.handle_counter_break, name='handle_break'),
+    path('staff/start_serving/', views.start_serving, name='start_serving'),
+    
+    path('ws/queue/updates/', consumers.QueueUpdatesConsumer.as_asgi()),
     # Display Screen URL
-    path('display/', views.display_screen, name='display_screen'),
-    path('favicon.ico', RedirectView.as_view(url=staticfiles_storage.url('img/favicon.ico'))),
+    
+    #path('favicon.ico', RedirectView.as_view(url=staticfiles_storage.url('img/favicon.ico'))),
     # API Endpoints (for AJAX calls)
     path('api/check-patient/', views.check_patient, name='check_patient'),
+    path('staff/logout/', views.staff_logout, name='staff_logout'),
+    path('display/', views.display_screen, name='display_screen'),
+    path('display/screen/data/', views.display_screen_data, name='display_screen_data'),
+
+    path('debug/counters/', views.debug_counters, name='debug_counters'),
+    path('staff/debug_session/', views.debug_session, name='debug_session'),
+    path('debug/staff_counters/', views.debug_staff_counters, name='debug_staff_counters'),
 ]
