@@ -1,53 +1,305 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Patient Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Dashboard - Queue System</title>
     <style>
+        :root {
+            --primary: #3498db;
+            --secondary: #2c3e50;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
         .dashboard-container {
-            max-width: 600px;
+            max-width: 800px;
             margin: 0 auto;
-            padding: 20px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
         }
+        
+        .header {
+            background: var(--secondary);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+        
+        .welcome-text {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
         .queue-info {
-            background: #f5f5f5;
-            padding: 20px;
-            border-radius: 5px;
-            margin-bottom: 20px;
+            padding: 40px;
+            background: white;
         }
+        
+        .info-card {
+            background: var(--light);
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border-left: 5px solid var(--primary);
+        }
+        
+        .info-card h2 {
+            color: var(--secondary);
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            font-weight: 600;
+        }
+        
+        .info-item {
+            display: flex;
+            justify-content: between;
+            margin-bottom: 15px;
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .info-label {
+            font-weight: 600;
+            color: var(--dark);
+            min-width: 120px;
+        }
+        
+        .info-value {
+            color: var(--secondary);
+            font-weight: 500;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+        
+        .status-waiting { background: #ffeaa7; color: #d35400; }
+        .status-serving { background: #d4edda; color: #155724; }
+        .status-completed { background: #cce5ff; color: #004085; }
+        
+        /* Beautiful message styles */
+        .message-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin: 30px 0;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .message-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+            display: block;
+        }
+        
+        .message-title {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .message-text {
+            font-size: 1.1em;
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+        
+        .waiting-animation {
+            display: inline-block;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
         .refresh-indicator {
             position: fixed;
-            bottom: 10px;
-            right: 10px;
-            background: #f0f0f0;
-            padding: 5px 10px;
-            border-radius: 3px;
-            font-size: 12px;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.9);
+            padding: 12px 20px;
+            border-radius: 25px;
+            font-size: 14px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .last-updated {
+            font-weight: 600;
+            color: var(--primary);
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard-container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .queue-info {
+                padding: 20px;
+            }
+            
+            .info-card {
+                padding: 20px;
+            }
+            
+            .message-card {
+                padding: 20px;
+            }
+            
+            .message-icon {
+                font-size: 2.5em;
+            }
         }
     </style>
 </head>
 <body>
     <div class="dashboard-container">
-        <h1>Welcome, {{ patient.name }}!</h1>
+        <div class="header">
+            <h1>Patient Dashboard</h1>
+            <p class="welcome-text">Welcome back, {{ patient.name }}!</p>
+        </div>
         
         <div class="queue-info">
-            <h2>Your Queue Information</h2>
-            <p><strong>Queue ID:</strong> <span id="queue-id">{{ queue_entry.queue_id }}</span></p>
-            <p><strong>Service:</strong> <span id="service-name">{{ queue_entry.service.service_name }}</span></p>
-            <p><strong>Counter:</strong> 
-                <span id="counter-name">
-                    {% if queue_entry.counter %}
-                        {{ queue_entry.counter.counter_name }}
-                    {% else %}
-                        Not assigned yet
-                    {% endif %}
-                </span>
-            </p>
-            <p><strong>Status:</strong> <span id="queue-status">{{ queue_entry.get_current_status_display }}</span></p>
+            <div class="info-card">
+                <h2>Your Queue Information</h2>
+                
+                <div class="info-item">
+                    <span class="info-label">Queue ID:</span>
+                    <span class="info-value" id="queue-id">{{ queue_entry.queue_id }}</span>
+                </div>
+                
+                <div class="info-item">
+                    <span class="info-label">Service:</span>
+                    <span class="info-value" id="service-name">{{ queue_entry.service.service_name }}</span>
+                </div>
+                
+                <div class="info-item">
+                    <span class="info-label">Counter:</span>
+                    <span class="info-value" id="counter-name">
+                        {% if queue_entry.counter %}
+                            {{ queue_entry.counter.counter_name }}
+                        {% else %}
+                            <em>Not assigned yet</em>
+                        {% endif %}
+                    </span>
+                </div>
+                
+                <div class="info-item">
+                    <span class="info-label">Status:</span>
+                    <span class="info-value">
+                        <span class="status-badge status-{{ queue_entry.current_status }}" id="queue-status">
+                            {{ queue_entry.get_current_status_display }}
+                        </span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Beautiful Messages based on status -->
+            {% if queue_entry.current_status == 'waiting' and queue_entry.counter %}
+            <div class="message-card">
+                <span class="message-icon">⏳</span>
+                <h3 class="message-title">You're in Queue!</h3>
+                <p class="message-text">
+                    Your queue number is <strong>{{ queue_entry.queue_id }}</strong>. 
+                    Please wait patiently. You'll be called to 
+                    <strong>{{ queue_entry.counter.counter_name }}</strong> shortly.
+                </p>
+                
+            </div>
+            {% endif %}
+
+            {% if queue_entry.current_status == 'waiting' and not queue_entry.counter %}
+            <div class="message-card">
+                <span class="message-icon">👥</span>
+                <h3 class="message-title">Waiting for Assignment</h3>
+                <p class="message-text">
+                    Your queue number is <strong>{{ queue_entry.queue_id }}</strong>. 
+                    We're currently finding the best available counter for you.
+                </p>
+                <p class="message-text waiting-animation">
+                    You'll be assigned to a counter shortly. Thank you for your patience!
+                </p>
+            </div>
+            {% endif %}
+
+            {% if queue_entry.current_status == 'serving' %}
+            <div class="message-card">
+                <span class="message-icon">🎯</span>
+                <h3 class="message-title">Your Turn Has Come!</h3>
+                <p class="message-text">
+                    Please proceed to <strong>{{ queue_entry.counter.counter_name }}</strong> immediately.
+                </p>
+                <p class="message-text">
+                    Your queue number <strong>{{ queue_entry.queue_id }}</strong> is being called.
+                </p>
+            </div>
+            {% endif %}
+
+            {% if not queue_entry %}
+            <div class="message-card">
+                <span class="message-icon">🚀</span>
+                <h3 class="message-title">Ready to Join Queue?</h3>
+                <p class="message-text">
+                    You're not currently in any queue. Would you like to join one?
+                </p>
+                <p class="message-text">
+                    <a href="/service/selection/" style="color: white; text-decoration: underline;">
+                        Click here to select a service and join the queue
+                    </a>
+                </p>
+            </div>
+            {% endif %}
         </div>
     </div>
 
     <div class="refresh-indicator" id="refresh-indicator">
-        Last updated: <span id="last-updated">Just now</span>
+        🔄 Last updated: <span class="last-updated" id="last-updated">Just now</span>
     </div>
 
     <script>
@@ -57,11 +309,14 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.queue_status) {
-                        document.getElementById('queue-status').textContent = 
-                            data.queue_status.charAt(0).toUpperCase() + data.queue_status.slice(1);
+                        const statusElement = document.getElementById('queue-status');
+                        const statusText = data.queue_status.charAt(0).toUpperCase() + data.queue_status.slice(1);
+                        
+                        statusElement.textContent = statusText;
+                        statusElement.className = 'status-badge status-' + data.queue_status;
                         
                         if (data.queue_status === 'serving') {
-                            document.getElementById('queue-status').textContent = 'Currently Being Served';
+                            statusElement.textContent = 'Currently Being Served';
                         } else if (data.queue_status === 'completed') {
                             window.location.href = '/queue/completed/';
                         }
