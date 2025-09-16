@@ -1,78 +1,518 @@
-<!-- templates/queue_app/display_screen.html -->
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Display Screen</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Queue Display Screen</title>
     <style>
+        :root {
+            --primary: #3498db;
+            --primary-dark: #2980b9;
+            --secondary: #2c3e50;
+            --success: #27ae60;
+            --success-dark: #219653;
+            --warning: #f39c12;
+            --warning-dark: #e67e22;
+            --danger: #e74c3c;
+            --danger-dark: #c0392b;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --gray: #95a5a6;
+            --border-radius: 12px;
+            --shadow: 0 8px 25px rgba(0,0,0,0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            background-color: #222;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
             color: white;
         }
-        .counter-display {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
         }
-        .counter {
-            background-color: #333;
-            border-radius: 10px;
-            padding: 20px;
-            margin: 10px;
-            width: 300px;
+
+        .header {
             text-align: center;
+            padding: 30px;
+            margin-bottom: 40px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border-radius: 15px;
+            color: white;
         }
-        .counter-name {
-            font-size: 24px;
+
+        .header h1 {
+            margin: 0;
+            font-size: 3em;
+            font-weight: 300;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            margin: 10px 0 0 0;
+            font-size: 1.3em;
+            opacity: 0.9;
+        }
+
+        .display-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            background: white;
+            color: var(--dark);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+        }
+
+        .display-table th {
+            background: linear-gradient(135deg, var(--secondary) 0%, #34495e 100%);
+            color: white;
+            padding: 25px;
+            font-size: 1.4em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        .display-table td {
+            padding: 30px 25px;
+            text-align: center;
+            border-bottom: 2px solid var(--light);
+            font-size: 1.2em;
+            transition: var(--transition);
+        }
+
+        .counter-cell {
+            background: linear-gradient(135deg, var(--success) 0%, var(--success-dark) 100%);
+            color: white;
+            font-weight: bold;
+            font-size: 1.5em !important;
+            width: 35%;
+            position: relative;
+        }
+
+        .counter-info {
+            text-align: left;
+        }
+
+        .counter-number {
+            font-size: 1.8em;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .counter-details {
+            font-size: 0.9em;
+            opacity: 0.9;
+            margin-top: 8px;
+        }
+
+        .queue-cell {
+            background: var(--light);
+            font-weight: bold;
+            position: relative;
+        }
+
+        .queue-info {
+            padding: 20px;
+        }
+
+        .queue-id {
+            font-size: 2.2em;
+            color: var(--primary-dark);
             font-weight: bold;
             margin-bottom: 10px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
         }
-        .current-patient {
-            font-size: 20px;
-            margin: 10px 0;
+
+        .patient-name {
+            font-size: 1.4em;
+            color: var(--secondary);
+            margin-bottom: 15px;
+            font-weight: 600;
         }
-        .queue-id {
-            font-size: 32px;
-            font-weight: bold;
-            color: #4CAF50;
+
+        .no-patient {
+            color: var(--gray);
+            font-style: italic;
+            font-size: 1.3em;
+            padding: 30px;
+        }
+
+        .announce-badge {
+            background: var(--warning);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-size: 1em;
+            font-weight: 600;
+            display: inline-block;
+            margin-top: 15px;
+            box-shadow: 0 3px 10px rgba(243, 156, 18, 0.3);
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            margin-right: 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .status-available { background: var(--success); }
+        .status-busy { background: var(--danger); }
+        .status-break { background: var(--warning); }
+
+        .highlight {
+            animation: highlight 2s ease-in-out;
+            background: linear-gradient(135deg, #ffeaa7 0%, #fab1a0 100%) !important;
+        }
+
+        @keyframes highlight {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); box-shadow: 0 5px 25px rgba(255, 234, 167, 0.4); }
+            100% { transform: scale(1); }
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            color: var(--light);
+            font-size: 1em;
+            padding: 20px;
+            background: rgba(44, 62, 80, 0.9);
+            border-radius: 10px;
+        }
+
+        .last-updated {
+            font-weight: 600;
+            color: var(--primary);
+            background: white;
+            padding: 8px 20px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-left: 10px;
+        }
+
+        /* Responsive design */
+        @media (max-width: 1024px) {
+            .container {
+                margin: 10px;
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2.2em;
+            }
+            
+            .display-table th,
+            .display-table td {
+                padding: 20px 15px;
+                font-size: 1.1em;
+            }
+            
+            .queue-id {
+                font-size: 1.8em;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .display-table {
+                display: block;
+                overflow-x: auto;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .header p {
+                font-size: 1.1em;
+            }
+            
+            .counter-cell,
+            .queue-cell {
+                font-size: 1.1em !important;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+            
+            .display-table th,
+            .display-table td {
+                padding: 15px 10px;
+                font-size: 1em;
+            }
+            
+            .queue-id {
+                font-size: 1.5em;
+            }
+            
+            .patient-name {
+                font-size: 1.2em;
+            }
         }
     </style>
 </head>
 <body>
-    <h1 style="text-align: center;">Queue Management System</h1>
-    
-    <div class="counter-display">
-        {% for counter in counters %}
-        <div class="counter">
-            <div class="counter-name">Counter {{ counter.counter_id }}</div>
-            <div class="counter-status">{{ counter.get_current_status_display }}</div>
-            
-            {% if serving_patients.counter.counter_id %}
-            <div class="current-patient">
-                Now Serving:
-                <div class="queue-id">{{ serving_patients.counter.counter_id.queue_id }}</div>
-                {{ serving_patients.counter.counter_id.patient_name }}
-            </div>
-            {% else %}
-            <div class="current-patient">Not currently serving</div>
-            {% endif %}
+    <div class="container">
+        <div class="header">
+            <h1>Queue Management System</h1>
+            <p>Live Counter Display - Currently Serving Patients</p>
         </div>
-        {% endfor %}
+
+        <table class="display-table">
+            <thead>
+                <tr>
+                    <th>Counter Information</th>
+                    <th>Currently Serving</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for counter in counters %}
+                <tr id="counter-row-{{ counter.counter_id }}">
+                    <td class="counter-cell">
+                        <div class="counter-info">
+                            <div class="counter-number">
+                                <span class="status-indicator status-{{ counter.current_status }}"></span>
+                                Counter {{ counter.counter_id }}
+                            </div>
+                            <div class="counter-details">
+                                {{ counter.counter_name }} - {{ counter.service.service_name }}
+                            </div>
+                            <div class="counter-details">
+                                Status: <strong>{{ counter.get_current_status_display }}</strong>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="queue-cell" id="queue-cell-{{ counter.counter_id }}">
+                        {% if serving_data.counter.counter_id %}
+                        <div class="queue-info">
+                            <div class="queue-id">{{ serving_data.counter.counter_id.queue_id }}</div>
+                            <div class="patient-name">{{ serving_data.counter.counter_id.patient_name }}</div>
+                            {% if serving_data.counter.counter_id.announcement_count > 0 %}
+                            <div class="announce-badge">
+                                📢 Announced {{ serving_data.counter.counter_id.announcement_count }}/3 times
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% else %}
+                        <div class="no-patient">⏳ Waiting for next patient...</div>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="footer">
+            🕒 Last updated: <span class="last-updated" id="last-updated">{{ current_time }}</span>
+        </div>
     </div>
 
     <script>
-        // WebSocket connection for real-time updates
-        const socket = new WebSocket(
-            'ws://' + window.location.host + '/ws/queue/updates/'
-        );
+        // Store last known serving patients and announcement states
+        let lastServingData = {};
+        let announcementQueue = [];
+        let isAnnouncing = false;
         
-        socket.onmessage = function(e) {
-            const data = JSON.parse(e.data);
-            // Update the display with new information
-            console.log('Update received:', data);
-            // Implement your display update logic here
-            window.location.reload(); // Simple refresh for now
-        };
+        // Auto-refresh every 3 seconds
+        setInterval(fetchDisplayData, 3000);
+        
+        function fetchDisplayData() {
+            fetch('/display/screen/data/')
+                .then(response => response.json())
+                .then(data => {
+                    updateDisplay(data);
+                    checkForAnnouncements(data);
+                    document.getElementById('last-updated').textContent = new Date().toLocaleTimeString();
+                })
+                .catch(error => {
+                    console.error('Error fetching display data:', error);
+                });
+        }
+        
+        function updateDisplay(data) {
+            data.counters.forEach(counter => {
+                const rowElement = document.getElementById(`counter-row-${counter.counter_id}`);
+                const cellElement = document.getElementById(`queue-cell-${counter.counter_id}`);
+                
+                if (!rowElement || !cellElement) return;
+                
+                // Update status indicator
+                const statusIndicator = rowElement.querySelector('.status-indicator');
+                if (statusIndicator) {
+                    statusIndicator.className = 'status-indicator';
+                    statusIndicator.classList.add(`status-${counter.current_status}`);
+                }
+                
+                // Update counter status text
+                const statusText = rowElement.querySelector('.counter-details:last-child');
+                if (statusText) {
+                    statusText.innerHTML = `Status: <strong>${counter.current_status.charAt(0).toUpperCase() + counter.current_status.slice(1)}</strong>`;
+                }
+                
+                // Update serving information
+                if (counter.serving_patient) {
+                    cellElement.innerHTML = `
+                        <div class="queue-info">
+                            <div class="queue-id">${counter.serving_patient.queue_id}</div>
+                            <div class="patient-name">${counter.serving_patient.patient_name}</div>
+                            ${counter.serving_patient.announcement_count > 0 ? `
+                            <div class="announce-badge">
+                                📢 Announced ${counter.serving_patient.announcement_count}/3 times
+                            </div>
+                            ` : ''}
+                        </div>
+                    `;
+                } else {
+                    cellElement.innerHTML = '<div class="no-patient">⏳ Waiting for next patient...</div>';
+                }
+            });
+        }
+        
+        function checkForAnnouncements(data) {
+            data.counters.forEach(counter => {
+                if (counter.serving_patient) {
+                    const patientKey = `${counter.counter_id}-${counter.serving_patient.queue_id}`;
+                    const lastPatient = lastServingData[patientKey];
+                    const currentPatient = counter.serving_patient;
+                    
+                    // Check if this is a new patient or needs announcement
+                    if (!lastPatient || currentPatient.announcement_count !== lastPatient.announcement_count) {
+                        
+                        // Add to announcement queue (3 times with delay)
+                        for (let i = 0; i < 3; i++) {
+                            announcementQueue.push({
+                                counter: counter,
+                                patient: currentPatient,
+                                delay: i * 3000 // 3 seconds between announcements
+                            });
+                        }
+                        
+                        // Highlight the counter row
+                        const rowElement = document.getElementById(`counter-row-${counter.counter_id}`);
+                        if (rowElement) {
+                            rowElement.classList.add('highlight');
+                            setTimeout(() => {
+                                rowElement.classList.remove('highlight');
+                            }, 6000);
+                        }
+                    }
+                    
+                    // Update last known data
+                    lastServingData[patientKey] = currentPatient;
+                }
+            });
+            
+            // Process announcement queue if not already announcing
+            if (!isAnnouncing && announcementQueue.length > 0) {
+                processAnnouncementQueue();
+            }
+        }
+        
+        function processAnnouncementQueue() {
+            if (announcementQueue.length === 0) {
+                isAnnouncing = false;
+                return;
+            }
+            
+            isAnnouncing = true;
+            const announcement = announcementQueue.shift();
+            
+            setTimeout(() => {
+                makeAnnouncement(announcement.counter, announcement.patient);
+                processAnnouncementQueue();
+            }, announcement.delay);
+        }
+        
+        function makeAnnouncement(counter, patient) {
+            const announcementText = `Counter ${counter.counter_id}. ${patient.patient_name}. Queue number ${patient.queue_id}. Please proceed to counter ${counter.counter_id}.`;
+            
+            console.log('Announcement:', announcementText);
+            
+            // Use speech synthesis if available
+            if ('speechSynthesis' in window) {
+                // Cancel any ongoing speech
+                window.speechSynthesis.cancel();
+                
+                const speech = new SpeechSynthesisUtterance(announcementText);
+                speech.volume = 1;
+                speech.rate = 0.9;
+                speech.pitch = 1;
+                
+                // Get a clear voice
+                const voices = window.speechSynthesis.getVoices();
+                const englishVoice = voices.find(voice => 
+                    voice.lang.includes('en') && voice.localService === true
+                );
+                
+                if (englishVoice) {
+                    speech.voice = englishVoice;
+                }
+                
+                // Speak the announcement
+                window.speechSynthesis.speak(speech);
+            }
+            
+            // Visual effect - flash the counter cell
+            const cellElement = document.getElementById(`queue-cell-${counter.counter_id}`);
+            if (cellElement) {
+                cellElement.style.backgroundColor = '#ffeaa7';
+                setTimeout(() => {
+                    cellElement.style.backgroundColor = '';
+                }, 1000);
+            }
+        }
+        
+        // Initial load
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchDisplayData();
+            
+            // Pre-load voices for speech synthesis
+            if ('speechSynthesis' in window) {
+                // Some browsers need this to populate voices
+                window.speechSynthesis.getVoices();
+                
+                // Re-get voices after a short delay
+                setTimeout(() => {
+                    window.speechSynthesis.getVoices();
+                }, 1000);
+            }
+            
+            // Continuous refresh
+            setInterval(fetchDisplayData, 3000);
+        });
     </script>
 </body>
 </html>
